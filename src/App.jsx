@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { MapContainer, TileLayer, GeoJSON, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { INFO_ESTRATEGICA_REGIOES, IMAGEM_FALLBACK } from './dados_estrategicos';
+const URL_BASE = "/data/mundo_base.geojson";
 const URL_PAISES = "/data/paises.geojson";
 const URL_REGIOES = "/data/regioes.geojson";
 
@@ -25,7 +26,7 @@ function MapController({ paisSelecionado }) {
 
     setTimeout(() => {
       map.invalidateSize();
-      const limitesEuropa = [[25, -35], [75, 45]]; 
+      const limitesEuropa = [[25, -35], [75, 55]]; 
       const zoomMinimo = map.getBoundsZoom(limitesEuropa); 
       map.setMinZoom(zoomMinimo);
       map.setMaxBounds(limitesEuropa);
@@ -34,7 +35,7 @@ function MapController({ paisSelecionado }) {
 
   useEffect(() => {
     if (!paisSelecionado) {
-      map.setView([48, 5], 3, { animate: true });
+      map.setView([50, 10], 3, { animate: true });
     }
   }, [paisSelecionado, map]);
 
@@ -43,6 +44,7 @@ function MapController({ paisSelecionado }) {
 
 
 export default function App() {
+  const [dadosBase, setDadosBase] = useState(null); // Estado para o fundo unificado
   const [dadosPaises, setDadosPaises] = useState(null);
   const [dadosRegioes, setDadosRegioes] = useState(null);
   
@@ -58,9 +60,10 @@ export default function App() {
 
   // 1. Carregar Mapas
   useEffect(() => {
-    const carregarMapas = async () => {
+    const carregarTudo = async () => {
       try {
-        const [resP, resR] = await Promise.all([ fetch(URL_PAISES), fetch(URL_REGIOES) ]);
+        const [resB, resP, resR] = await Promise.all([fetch(URL_BASE), fetch(URL_PAISES), fetch(URL_REGIOES) ]);
+        setDadosBase(await resB.json());
         setDadosPaises(await resP.json());
         setDadosRegioes(await resR.json());
         setCarregando(false);
@@ -69,7 +72,7 @@ export default function App() {
         setCarregando(false);
       }
     };
-    carregarMapas();
+    carregarTudo();
   }, []);
 
   // 2. Clique no PAÍS
@@ -137,10 +140,18 @@ export default function App() {
     };
 
     if (boundsExcecoes[codigoOriginal]) {
-      mapa.fitBounds(boundsExcecoes[codigoOriginal], { padding: [30, 30] });
+      mapa.fitBounds(boundsExcecoes[codigoOriginal], { 
+        padding: [30, 30],
+        animate: true,
+        duration: 0.8
+      });
     } else {
       const bounds = layer.getBounds();
-      mapa.fitBounds(bounds, { padding: [30, 30] });
+      mapa.fitBounds(bounds, { 
+        padding: [30, 30],
+        animate: true,
+        duration: 0.8
+      });
     }
   };
 
@@ -151,10 +162,12 @@ const clicarNaRegiao = (e) => {
   const nomeRegiao = feature.properties.NUTS_NAME;
   const nutsId = feature.properties.NUTS_ID;
 
+  console.log("Cliquei em:", nutsId, nomeRegiao);
+  console.log("Dados encontrados?", INFO_ESTRATEGICA_REGIOES[nutsId]);
+  console.log("URL da imagem:", INFO_ESTRATEGICA_REGIOES[nutsId]?.img || "FALLBACK");
+
   setRegiaoSelecionada(nutsId);
 
-  // Zoom tático para a região
-  layer._map.fitBounds(layer.getBounds(), { padding: [50, 50], maxZoom: 5, animate: true });
 
   // 1. Procura no teu Dicionário
   const dadosRegiao = INFO_ESTRATEGICA_REGIOES[nutsId];
@@ -255,10 +268,22 @@ const clicarNaRegiao = (e) => {
   
       {/* MAPA */}
       <div style={{ flexGrow: 1, height: '100vh', position: 'relative', background: '#b3e5fc', overflow: 'hidden' }}>
-        <MapContainer preferCanvas={true} center={[45, 5]} zoom={3} zoomSnap={0.25} zoomControl={false} style={{ height: '100%', width: '100%', background: '#b3e5fc' }}>
+        <MapContainer preferCanvas={true} center={[45, 5]} zoom={3} zoomSnap={0.25} zoomControl={false} zoomAnimationThreshold={10} style={{ height: '100%', width: '100%', background: '#b3e5fc' }}>
           <MapController paisSelecionado={paisSelecionado} />
-          <TileLayer url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png" />
-  
+          
+          {/* CAMADA 0: O MUNDO UNIFICADO (A tua base perfeita) */}
+      {dadosBase && (
+        <GeoJSON 
+          data={dadosBase} 
+          style={{ 
+            color: 'transparent',    // Sem bordas internas
+            fillColor: '#1e293b',   // Cor de fundo da terra
+            fillOpacity: 1 
+          }} 
+          interactive={false}       // Esta camada não reage a cliques
+        />
+      )}
+
           {/* Camada 1: Países (Sempre ativa, exceto o país selecionado) */}
           {dadosPaises && (
             <GeoJSON 
@@ -273,6 +298,7 @@ const clicarNaRegiao = (e) => {
                   click: clicarNoPais,
                   mouseover: (e) => e.target.setStyle({ fillOpacity: 0.9, fillColor: '#FFCC00' }),
                   mouseout: (e) => e.target.setStyle({ fillOpacity: 0.9, fillColor: '#003399' })
+                  
                 });
               }}
             />
