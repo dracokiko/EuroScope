@@ -994,15 +994,32 @@ const abrirNews = async () => {
                         {art.title}
                       </p>
                       <p style={{
-                        color: '#64748b', fontSize: '10px',
-                        margin: '6px 0 0 0', fontWeight: 600,
-                        textTransform: 'uppercase', letterSpacing: '0.5px',
-                        display: 'flex', gap: '8px', alignItems: 'center'
-                      }}>
-                        <span>{art.domain}</span>
-                        <span style={{ opacity: 0.5 }}>·</span>
-                        <span>{formatNewsDate(art.seendate)}</span>
-                      </p>
+  color: '#64748b',
+  fontSize: '10px',
+  margin: '6px 0 0 0',
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
+  display: 'flex',
+  gap: '8px',
+  alignItems: 'center'
+}}>
+  {process.env.NODE_ENV === 'development' && (
+  <div style={{
+    marginTop: '6px',
+    fontSize: '10px',
+    color: '#facc15',
+    fontWeight: 700
+  }}>
+    Score: {art.score.toFixed(1)}
+  </div>
+)}
+  <span>{art.source}</span>
+
+  <span style={{ opacity: 0.5 }}>·</span>
+
+  <span>{formatNewsDate(art.pubDate)}</span>
+</p>
                     </div>
                   </a>
                 ))}
