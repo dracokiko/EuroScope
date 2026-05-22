@@ -284,19 +284,16 @@ const abrirNews = async () => {
   setNewsError(null);
 
   try {
-    // Chamamos a função apenas com o código do país
     const data = await fetchNewsForCountry(paisSelecionado);
-    
-    // CORREÇÃO AQUI: 'data' já é o array direto de artigos, não precisas de .articles!
-    if (data && data.length > 0) {
-      setNewsArticles(data);
+    if (data && data.articles && data.articles.length > 0) {
+      setNewsArticles(data.articles);
     } else {
-      setNewsError("No recent economic or geopolitical news found for this country.");
+      setNewsError("No recent economic or geopolitical news found.");
       setNewsArticles([]);
     }
   } catch (err) {
-    console.error("Erro capturado no App.jsx:", err);
-    setNewsError("Couldn't load news right now.");
+    console.error("Erro:", err);
+    setNewsError("Couldn't load news.");
     setNewsArticles([]);
   } finally {
     setNewsLoading(false);
