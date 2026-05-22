@@ -1,7 +1,7 @@
 export default async function handler(req, res) {
   const { country = 'DE' } = req.query;
 
-  // Dicionário completo com todos os países do teu EuroScope
+  // Mapa de nomes oficiais (mantemos, mas apenas para a Query)
   const countryNames = {
     'PT': 'Portugal', 'ES': 'Spain', 'FR': 'France', 'DE': 'Germany', 
     'UK': 'United Kingdom', 'IT': 'Italy', 'NL': 'Netherlands', 'BE': 'Belgium',
@@ -17,38 +17,42 @@ export default async function handler(req, res) {
     'MC': 'Monaco', 'SM': 'San Marino', 'AD': 'Andorra', 'VA': 'Vatican City', 'XK': 'Kosovo'
   };
 
-  const name = countryNames[country] || 'European Union';
-  
-  // URL formatada para pesquisa precisa
-  const rssUrl = `https://news.google.com/rss/search?q=intitle:${encodeURIComponent(name)}+economy+OR+politics&hl=en-US&gl=${country}&ceid=US:en`;
+  const name = countryNames[country] || 'Europe';
+
+  // QUERY SEMÂNTICA: Forçamos a entidade país E o contexto obrigatório
+  const searchQuery = `"${name}" AND (economy OR politics OR government OR industry OR energy)`;
+  const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(searchQuery)}&hl=en-US&gl=US&ceid=US:en`;
+
   try {
     const response = await fetch(rssUrl);
     const xml = await response.text();
+    
+    // Extração robusta
     const items = [];
     const itemRegex = /<item>[\s\S]*?<title>(.*?)<\/title>[\s\S]*?<link>(.*?)<\/link>/g;
     let match;
-    
-    // O nome do país para verificar (ex: 'Portugal')
-    const countryName = name.toLowerCase();
-    
+
+    // Termos para penalização (o que NÃO queremos em dashboards de inteligência)
+    const junkTerms = ['football', 'tourism', 'holiday', 'sport', 'recipe', 'travel'];
+
     while ((match = itemRegex.exec(xml)) !== null && items.length < 8) {
       const title = match[1].replace('<![CDATA[', '').replace(']]>', '');
       const link = match[2];
+      const lowerTitle = title.toLowerCase();
+
+      // FILTRO DE RELEVÂNCIA
+      const isRelevant = !junkTerms.some(term => lowerTitle.includes(term));
       
-      // FILTRO DE QUALIDADE: Só adicionamos se o título contiver o nome do país
-      if (title.toLowerCase().includes(countryName)) {
+      if (isRelevant) {
         items.push({ title, url: link, domain: "Google News" });
       }
     }
-    
-    // Se após a filtragem não sobrar nada, devolvemos um erro claro
-    if (items.length === 0) {
-      return res.status(404).json({ error: "No specific news found for this country." });
-    }
-    
-    res.setHeader('Cache-Control', 's-maxage=3600');
+
+    if (items.length === 0) return res.status(404).json({ error: "No relevant intelligence data found." });
+
+    res.setHeader('Cache-Control', 's-maxage=1800');
     return res.status(200).json({ articles: items });
   } catch (error) {
-    return res.status(500).json({ error: "Failed" });
+    return res.status(500).json({ error: "Provider failure" });
   }
 }
