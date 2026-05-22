@@ -3,30 +3,27 @@ export default async function handler(req, res) {
   const countryMap = { 'GM': 'germany', 'FR': 'france', 'PO': 'portugal', 'SP': 'spain', 'UK': 'united kingdom', 'IT': 'italy' };
   const countryName = countryMap[country] || 'europe';
 
-  // Substitui a linha do rssUrl por esta:
-const rssUrl = `https://news.google.com/rss/search?q=${countryName}+economy+OR+politics&hl=en-US&gl=US&ceid=US:en`;
+  const rssUrl = `https://news.google.com/rss/search?q=${countryName}+economy+politics&hl=en-US&gl=US&ceid=US:en`;
 
   try {
     const response = await fetch(rssUrl);
     const xml = await response.text();
     
-    // Expressão regular simples para extrair títulos e links sem depender de APIs externas
     const items = [];
-    const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+    // Regex melhorada para capturar títulos e links de forma mais robusta
+    const itemRegex = /<item>[\s\S]*?<title>(.*?)<\/title>[\s\S]*?<link>(.*?)<\/link>/g;
     let match;
     
-    while ((match = itemRegex.exec(xml)) !== null && items.length < 10) {
-      const content = match[1];
-      const title = content.match(/<title>(.*?)<\/title>/)?.[1] || "No title";
-      const link = content.match(/<link>(.*?)<\/link>/)?.[1] || "#";
-      const pubDate = content.match(/<pubDate>(.*?)<\/pubDate>/)?.[1] || "";
-      
-      items.push({ title, url: link, domain: "Google News", seendate: pubDate });
+    while ((match = itemRegex.exec(xml)) !== null && items.length < 5) {
+      items.push({
+        title: match[1].replace('<![CDATA[', '').replace(']]>', ''),
+        url: match[2],
+        domain: "Google News"
+      });
     }
 
-    res.setHeader('Cache-Control', 's-maxage=3600');
-    return res.status(200).json({ articles: items });
+    res.status(200).json({ articles: items });
   } catch (error) {
-    return res.status(500).json({ error: "Failed to parse feed" });
+    res.status(500).json({ error: error.message });
   }
 }
