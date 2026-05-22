@@ -914,7 +914,7 @@ const abrirNews = async () => {
                 {nomePaisAtual}
               </h2>
               <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0 0' }}>
-                Economy · Politics · Geopolitics · last 3 days
+                Economy · Politics · Geopolitics · Today
               </p>
             </div>
 
