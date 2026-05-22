@@ -20,7 +20,7 @@ export default async function handler(req, res) {
   const name = countryNames[country] || 'European Union';
   
   // URL formatada para pesquisa precisa
-  const rssUrl = `https://news.google.com/rss/search?q=location:${encodeURIComponent(name)}+economy+OR+politics&hl=en-US&gl=${country}&ceid=${country}:en`;
+  const rssUrl = `https://news.google.com/rss/search?q=intitle:${encodeURIComponent(name)}+economy+OR+politics&hl=en-US&gl=${country}&ceid=US:en`;
   try {
     const response = await fetch(rssUrl);
     const xml = await response.text();
