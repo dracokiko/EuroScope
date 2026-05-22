@@ -1,6 +1,15 @@
 export default async function handler(req, res) {
   const { country = 'DE' } = req.query;
-  const countryMap = { 'GM': 'germany', 'FR': 'france', 'PO': 'portugal', 'SP': 'spain', 'UK': 'united kingdom', 'IT': 'italy' };
+  const countryMap = { 'PT': 'Portugal', 'ES': 'Spain', 'FR': 'France', 'DE': 'Germany', 
+    'UK': 'United Kingdom', 'IT': 'Italy', 'NL': 'Netherlands', 'BE': 'Belgium',
+    'SE': 'Sweden', 'DK': 'Denmark', 'FI': 'Finland', 'NO': 'Norway', 
+    'CH': 'Switzerland', 'AT': 'Austria', 'IE': 'Ireland', 'PL': 'Poland',
+    'EL': 'Greece', 'CZ': 'Czech Republic', 'HU': 'Hungary', 'RO': 'Romania',
+    'BG': 'Bulgaria', 'HR': 'Croatia', 'SI': 'Slovenia', 'SK': 'Slovakia',
+    'EE': 'Estonia', 'LV': 'Latvia', 'LT': 'Lithuania', 'LU': 'Luxembourg',
+    'CY': 'Cyprus', 'MT': 'Malta', 'IS': 'Iceland', 'UA': 'Ukraine', 
+    'TR': 'Turkey', 'RS': 'Serbia', 'BA': 'Bosnia', 'ME': 'Montenegro',
+    'MK': 'North Macedonia', 'AL': 'Albania', 'MD': 'Moldova', 'GE': 'Georgia' };
   const countryName = countryMap[country] || 'europe';
 
   const rssUrl = `https://news.google.com/rss/search?q=${countryName}+economy+politics&hl=en-US&gl=US&ceid=US:en`;
