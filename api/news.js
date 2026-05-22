@@ -28,12 +28,22 @@ export default async function handler(req, res) {
     const itemRegex = /<item>[\s\S]*?<title>(.*?)<\/title>[\s\S]*?<link>(.*?)<\/link>/g;
     let match;
     
+    // O nome do país para verificar (ex: 'Portugal')
+    const countryName = name.toLowerCase();
+    
     while ((match = itemRegex.exec(xml)) !== null && items.length < 8) {
-      items.push({
-        title: match[1].replace('<![CDATA[', '').replace(']]>', ''),
-        url: match[2],
-        domain: "Google News"
-      });
+      const title = match[1].replace('<![CDATA[', '').replace(']]>', '');
+      const link = match[2];
+      
+      // FILTRO DE QUALIDADE: Só adicionamos se o título contiver o nome do país
+      if (title.toLowerCase().includes(countryName)) {
+        items.push({ title, url: link, domain: "Google News" });
+      }
+    }
+    
+    // Se após a filtragem não sobrar nada, devolvemos um erro claro
+    if (items.length === 0) {
+      return res.status(404).json({ error: "No specific news found for this country." });
     }
     
     res.setHeader('Cache-Control', 's-maxage=3600');
