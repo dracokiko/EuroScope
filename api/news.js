@@ -8,8 +8,10 @@ export default async function handler(req, res) {
     'BG': 'Bulgaria', 'HR': 'Croatia', 'SI': 'Slovenia', 'SK': 'Slovakia',
     'EE': 'Estonia', 'LV': 'Latvia', 'LT': 'Lithuania', 'LU': 'Luxembourg',
     'CY': 'Cyprus', 'MT': 'Malta', 'IS': 'Iceland', 'UA': 'Ukraine', 
-    'TR': 'Turkey', 'RS': 'Serbia', 'BA': 'Bosnia', 'ME': 'Montenegro',
-    'MK': 'North Macedonia', 'AL': 'Albania', 'MD': 'Moldova', 'GE': 'Georgia' };
+    'TR': 'Turkey', 'RS': 'Serbia', 'BA': 'Bosnia and Herzegovina', 'ME': 'Montenegro',
+    'MK': 'North Macedonia', 'AL': 'Albania', 'MD': 'Moldova', 'GE': 'Georgia',
+    'AM': 'Armenia', 'AZ': 'Azerbaijan', 'BY': 'Belarus', 'LI': 'Liechtenstein',
+    'MC': 'Monaco', 'SM': 'San Marino', 'AD': 'Andorra', 'VA': 'Vatican City', 'XK': 'Kosovo'};
   const countryName = countryMap[country] || 'europe';
 
   const rssUrl = `https://news.google.com/rss/search?q=${countryName}+economy+politics&hl=en-US&gl=US&ceid=US:en`;
