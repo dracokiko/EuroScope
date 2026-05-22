@@ -3,7 +3,8 @@ export default async function handler(req, res) {
   const countryMap = { 'GM': 'germany', 'FR': 'france', 'PO': 'portugal', 'SP': 'spain', 'UK': 'united kingdom', 'IT': 'italy' };
   const countryName = countryMap[country] || 'europe';
 
-  const rssUrl = `https://news.google.com/rss/search?q=${countryName}+economy+politics&hl=en-US&gl=US&ceid=US:en`;
+  // Substitui a linha do rssUrl por esta:
+const rssUrl = `https://news.google.com/rss/search?q=${countryName}+economy+OR+politics&hl=en-US&gl=US&ceid=US:en`;
 
   try {
     const response = await fetch(rssUrl);
