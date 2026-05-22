@@ -182,3 +182,30 @@
     border-right-color: var(--border);
   }
 }
+/* 1. Esmaga o fundo branco, margens e sombras nativas */
+.leaflet-container .leaflet-tooltip.custom-energy-tooltip {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* 2. Aniquila o triângulo/seta branca independentemente da direção */
+.leaflet-container .leaflet-tooltip.custom-energy-tooltip::before,
+.leaflet-container .leaflet-tooltip.custom-energy-tooltip::after {
+  display: none !important;
+  border: none !important;
+  opacity: 0 !important;
+  background: transparent !important;
+}
+
+/* Esconder a barra de scroll, mantendo a funcionalidade */
+.sidebar-scroll::-webkit-scrollbar {
+  display: none;
+}
+.sidebar-scroll {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}

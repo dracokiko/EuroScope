@@ -1,0 +1,286 @@
+// ============================================================
+// COUNTRY BRANDS — Database of the most well-known companies
+// ============================================================
+//
+// Keys are the GeoJSON CNTR_CODE values (same as paisSelecionado)
+//
+// IMPORTANT codes:
+//   - Portugal = "PT", Spain = "ES", France = "FR", Germany = "DE"
+//   - United Kingdom = "UK" (NOT "GB") — that's what the GeoJSON uses
+//   - Greece = "EL" (NOT "GR")
+//
+// Per brand:
+//   - name   (required)
+//   - sector (optional, e.g. "Footwear", "Banking", "Auto")
+//   - domain (the company website domain — ONLY the domain, no https://)
+//            The logo is fetched automatically from this domain.
+//            If logo retrieval fails, a styled initial is shown.
+//
+// HOW LOGOS WORK (no manual lookup needed):
+//   We use Logo.dev as primary source, falling back to Google's favicon
+//   service. Both accept any domain — no API key, no registration.
+//   You only need to write the domain (e.g. "zara.com") and the App.jsx
+//   builds the URL automatically.
+//
+// ============================================================
+
+export const BRANDS_PAISES = {
+  "PT": [
+    { name: "Galp",             sector: "Energy",     domain: "galp.com" },
+    { name: "EDP",              sector: "Energy",     domain: "edp.com" },
+    { name: "Sonae",            sector: "Retail",     domain: "sonae.pt" },
+    { name: "Jerónimo Martins", sector: "Retail",     domain: "jeronimomartins.com" },
+    { name: "Millennium BCP",   sector: "Banking",    domain: "millenniumbcp.pt" },
+    { name: "TAP",              sector: "Airline",    domain: "flytap.com" },
+    { name: "Delta Cafés",      sector: "Food & Bev", domain: "delta-cafes.pt" },
+    { name: "Super Bock",       sector: "Beverages",  domain: "superbockgroup.com" }
+  ],
+  "ES": [
+    { name: "Zara",        sector: "Fashion",  domain: "zara.com" },
+    { name: "Santander",   sector: "Banking",  domain: "santander.com" },
+    { name: "Telefónica",  sector: "Telecom",  domain: "telefonica.com" },
+    { name: "BBVA",        sector: "Banking",  domain: "bbva.com" },
+    { name: "Iberdrola",   sector: "Energy",   domain: "iberdrola.es" },
+    { name: "Repsol",      sector: "Energy",   domain: "repsol.com" },
+    { name: "SEAT",        sector: "Auto",     domain: "seat.com" },
+    { name: "Mango",       sector: "Fashion",  domain: "mango.com" }
+  ],
+  "FR": [
+    { name: "LVMH",           sector: "Luxury",      domain: "lvmh.com" },
+    { name: "L'Oréal",        sector: "Cosmetics",   domain: "loreal.com" },
+    { name: "TotalEnergies",  sector: "Energy",      domain: "totalenergies.com" },
+    { name: "Renault",        sector: "Auto",        domain: "renault.com" },
+    { name: "Peugeot",        sector: "Auto",        domain: "peugeot.com" },
+    { name: "Airbus",         sector: "Aerospace",   domain: "airbus.com" },
+    { name: "Carrefour",      sector: "Retail",      domain: "carrefour.com" },
+    { name: "BNP Paribas",    sector: "Banking",     domain: "bnpparibas.com" }
+  ],
+  "DE": [
+    { name: "Volkswagen",     sector: "Auto",       domain: "volkswagen.com" },
+    { name: "BMW",            sector: "Auto",       domain: "bmw.com" },
+    { name: "Mercedes-Benz",  sector: "Auto",       domain: "mercedes-benz.com" },
+    { name: "Siemens",        sector: "Industry",   domain: "siemens.com" },
+    { name: "SAP",            sector: "Software",   domain: "sap.com" },
+    { name: "Adidas",         sector: "Sports",     domain: "adidas.com" },
+    { name: "Bosch",          sector: "Industry",   domain: "bosch.com" },
+    { name: "Allianz",        sector: "Insurance",  domain: "allianz.com" }
+  ],
+  "IT": [
+    { name: "Ferrari",  sector: "Auto",       domain: "ferrari.com" },
+    { name: "Fiat",     sector: "Auto",       domain: "fiat.com" },
+    { name: "Gucci",    sector: "Luxury",     domain: "gucci.com" },
+    { name: "Prada",    sector: "Luxury",     domain: "prada.com" },
+    { name: "Eni",      sector: "Energy",     domain: "eni.com" },
+    { name: "Lavazza",  sector: "Food & Bev", domain: "lavazza.com" },
+    { name: "Barilla",  sector: "Food & Bev", domain: "barilla.com" },
+    { name: "Pirelli",  sector: "Auto",       domain: "pirelli.com" }
+  ],
+  "UK": [
+    { name: "Shell",        sector: "Energy",     domain: "shell.com" },
+    { name: "HSBC",         sector: "Banking",    domain: "hsbc.com" },
+    { name: "Burberry",     sector: "Fashion",    domain: "burberry.com" },
+    { name: "Rolls-Royce",  sector: "Aerospace",  domain: "rolls-royce.com" },
+    { name: "BP",           sector: "Energy",     domain: "bp.com" },
+    { name: "Vodafone",     sector: "Telecom",    domain: "vodafone.com" },
+    { name: "Tesco",        sector: "Retail",     domain: "tesco.com" },
+    { name: "Barclays",     sector: "Banking",    domain: "barclays.com" }
+  ],
+  "NL": [
+    { name: "Shell",       sector: "Energy",    domain: "shell.com" },
+    { name: "Heineken",    sector: "Beverages", domain: "heineken.com" },
+    { name: "Philips",     sector: "Tech",      domain: "philips.com" },
+    { name: "ING",         sector: "Banking",   domain: "ing.com" },
+    { name: "ASML",        sector: "Tech",      domain: "asml.com" },
+    { name: "KLM",         sector: "Airline",   domain: "klm.com" }
+  ],
+  "BE": [
+    { name: "AB InBev",      sector: "Beverages",  domain: "ab-inbev.com" },
+    { name: "Solvay",        sector: "Chemistry",  domain: "solvay.com" },
+    { name: "Proximus",      sector: "Telecom",    domain: "proximus.com" },
+    { name: "KBC",           sector: "Banking",    domain: "kbc.com" }
+  ],
+  "SE": [
+    { name: "IKEA",      sector: "Retail",    domain: "ikea.com" },
+    { name: "H&M",       sector: "Fashion",   domain: "hm.com" },
+    { name: "Volvo",     sector: "Auto",      domain: "volvocars.com" },
+    { name: "Spotify",   sector: "Tech",      domain: "spotify.com" },
+    { name: "Ericsson",  sector: "Telecom",   domain: "ericsson.com" }
+  ],
+  "DK": [
+    { name: "LEGO",       sector: "Toys",        domain: "lego.com" },
+    { name: "Maersk",     sector: "Logistics",   domain: "maersk.com" },
+    { name: "Carlsberg",  sector: "Beverages",   domain: "carlsberg.com" },
+    { name: "Novo Nordisk", sector: "Pharma",    domain: "novonordisk.com" }
+  ],
+  "FI": [
+    { name: "Nokia",  sector: "Telecom",   domain: "nokia.com" },
+    { name: "Kone",   sector: "Industry",  domain: "kone.com" },
+    { name: "Neste",  sector: "Energy",    domain: "neste.com" }
+  ],
+  "NO": [
+    { name: "Equinor",   sector: "Energy",   domain: "equinor.com" },
+    { name: "Telenor",   sector: "Telecom",  domain: "telenor.com" },
+    { name: "DNB",       sector: "Banking",  domain: "dnb.no" }
+  ],
+  "CH": [
+    { name: "Nestlé",          sector: "Food & Bev",  domain: "nestle.com" },
+    { name: "Rolex",           sector: "Luxury",      domain: "rolex.com" },
+    { name: "Roche",           sector: "Pharma",      domain: "roche.com" },
+    { name: "Novartis",        sector: "Pharma",      domain: "novartis.com" },
+    { name: "UBS",             sector: "Banking",     domain: "ubs.com" },
+    { name: "ABB",             sector: "Industry",    domain: "abb.com" }
+  ],
+  "AT": [
+    { name: "Red Bull",  sector: "Beverages",  domain: "redbull.com" },
+    { name: "OMV",       sector: "Energy",     domain: "omv.com" },
+    { name: "Erste",     sector: "Banking",    domain: "erstegroup.com" }
+  ],
+  "IE": [
+    { name: "Ryanair",     sector: "Airline",    domain: "ryanair.com" },
+    { name: "Guinness",    sector: "Beverages",  domain: "guinness.com" },
+    { name: "Accenture",   sector: "Tech",       domain: "accenture.com" }
+  ],
+  "PL": [
+    { name: "PKN Orlen",  sector: "Energy",   domain: "orlen.pl" },
+    { name: "PKO BP",     sector: "Banking",  domain: "pkobp.pl" },
+    { name: "CD Projekt", sector: "Gaming",   domain: "cdprojekt.com" }
+  ],
+  "EL": [ // Grécia (Código EL conforme especificado)
+    { name: "Aegean Airlines", sector: "Airline",   domain: "aegeanair.com" },
+    { name: "Eurobank",        sector: "Banking",   domain: "eurobank.gr" },
+    { name: "OPAP",            sector: "Gaming",    domain: "opap.gr" },
+    { name: "Mytilineos",      sector: "Industry",  domain: "mytilineos.gr" }
+  ],
+  "CZ": [ // República Checa
+    { name: "Škoda Auto",  sector: "Auto",     domain: "skoda-auto.com" },
+    { name: "ČEZ Group",   sector: "Energy",   domain: "cez.cz" },
+    { name: "Avast",       sector: "Software", domain: "avast.com" }
+  ],
+  "HU": [ // Hungria
+    { name: "MOL Group",   sector: "Energy",   domain: "molgroup.info" },
+    { name: "OTP Bank",    sector: "Banking",  domain: "otpbank.hu" },
+    { name: "Richter Gedeon", sector: "Pharma", domain: "gedeonrichter.com" }
+  ],
+  "RO": [ // Roménia
+    { name: "Dacia",       sector: "Auto",     domain: "dacia.ro" },
+    { name: "UiPath",      sector: "Software", domain: "uipath.com" },
+    { name: "Banca Transilvania", sector: "Banking", domain: "bancatransilvania.ro" }
+  ],
+  "BG": [ // Bulgária
+    { name: "Vivacom",     sector: "Telecom",  domain: "vivacom.bg" },
+    { name: "Fibank",      sector: "Banking",  domain: "fibank.bg" }
+  ],
+  "HR": [ // Croácia
+    { name: "Rimac Automobili", sector: "Auto",   domain: "rimac-automobili.com" },
+    { name: "Infobip",          sector: "Software", domain: "infobip.com" },
+    { name: "Končar",           sector: "Industry", domain: "koncar.hr" }
+  ],
+  "SI": [ // Eslovénia
+    { name: "Krka",        sector: "Pharma",   domain: "krka.biz" },
+    { name: "Gorenje",     sector: "Appliances", domain: "gorenje.com" }
+  ],
+  "SK": [ // Eslováquia
+    { name: "ESET",        sector: "Software", domain: "eset.com" },
+    { name: "Slovnaft",    sector: "Energy",   domain: "slovnaft.sk" }
+  ],
+  "EE": [ // Estónia
+    { name: "Bolt",        sector: "Mobility", domain: "bolt.eu" },
+    { name: "Wise",        sector: "Fintech",  domain: "wise.com" }
+  ],
+  "LV": [ // Letónia
+    { name: "airBaltic",   sector: "Airline",  domain: "airbaltic.com" },
+    { name: "Citadele",    sector: "Banking",  domain: "citadele.lv" }
+  ],
+  "LT": [ // Lituânia
+    { name: "Vinted",      sector: "Retail",   domain: "vinted.com" },
+    { name: "Maxima",      sector: "Retail",   domain: "maximagroup.eu" }
+  ],
+  "LU": [ // Luxemburgo
+    { name: "ArcelorMittal", sector: "Industry", domain: "arcelormittal.com" },
+    { name: "SES",           sector: "Telecom",  domain: "ses.com" }
+  ],
+  "CY": [ // Chipre
+    { name: "Bank of Cyprus", sector: "Banking", domain: "bankofcyprus.com" },
+    { name: "Wargaming",      sector: "Gaming",  domain: "wargaming.com" }
+  ],
+  "MT": [ // Malta
+    { name: "Air Malta",   sector: "Airline",  domain: "airmalta.com" },
+    { name: "APS Bank",    sector: "Banking",  domain: "apsbank.com.mt" }
+  ],
+  "IS": [ // Islândia
+    { name: "Marel",       sector: "Industry", domain: "marel.com" },
+    { name: "Icelandair",  sector: "Airline",  domain: "icelandair.com" }
+  ],
+  "UA": [ // Ucrânia
+    { name: "Grammarly",   sector: "Software", domain: "grammarly.com" },
+    { name: "DTEK",        sector: "Energy",   domain: "dtek.com" }
+  ],
+  "TR": [ // Turquia (Parte europeia/Geopolitical)
+    { name: "Turkish Airlines", sector: "Airline", domain: "turkishairlines.com" },
+    { name: "Beko",             sector: "Appliances", domain: "beko.com" },
+    { name: "Getir",            sector: "Delivery", domain: "getir.com" }
+  ],
+  "RS": [ // Sérvia
+    { name: "Air Serbia",  sector: "Airline",  domain: "airserbia.com" },
+    { name: "NIS",         sector: "Energy",   domain: "nis.rs" }
+  ],
+  "BA": [ // Bósnia e Herzegovina
+    { name: "ASA Bolnica", sector: "Health",   domain: "asabolnica.ba" },
+    { name: "Elektroprivreda BiH", sector: "Energy", domain: "epbih.ba" }
+  ],
+  "ME": [ // Montenegro
+    { name: "Crnogorski Telekom", sector: "Telecom", domain: "telekom.me" },
+    { name: "EPCG",        sector: "Energy",   domain: "epcg.com" }
+  ],
+  "MK": [ // Macedónia do Norte
+    { name: "Alkaloid",    sector: "Pharma",   domain: "alkaloid.com.mk" },
+    { name: "Komercijalna Banka", sector: "Banking", domain: "kb.mk" }
+  ],
+  "AL": [ // Albânia
+    { name: "Albtelecom",  sector: "Telecom",  domain: "albtelecom.al" },
+    { name: "BKT",         sector: "Banking",  domain: "bkt.com.al" }
+  ],
+  "MD": [ // Moldávia
+    { name: "Purcari",     sector: "Beverages", domain: "purcari.wine" },
+    { name: "Moldcell",    sector: "Telecom",  domain: "moldcell.md" }
+  ],
+  "GE": [ // Geórgia (Geopolítico/Eurostat)
+    { name: "Bank of Georgia", sector: "Banking", domain: "bankofgeorgia.ge" },
+    { name: "TBC Bank",    sector: "Banking",  domain: "tbcbank.ge" }
+  ],
+  "AM": [ // Arménia (Geopolítico/Eurostat)
+    { name: "Team Telecom", sector: "Telecom", domain: "telecomarmenia.am" },
+    { name: "Ameriabank",  sector: "Banking",  domain: "ameriabank.am" }
+  ],
+  "AZ": [ // Azerbaijão (Geopolítico/Eurostat)
+    { name: "SOCAR",       sector: "Energy",   domain: "socar.az" },
+    { name: "Pasha Bank",  sector: "Banking",  domain: "pashabank.az" }
+  ],
+  "BY": [ // Bielorrússia
+    { name: "Wargaming",   sector: "Gaming",   domain: "wargaming.com" }, 
+    { name: "BelAZ",       sector: "Industry", domain: "belaz.by" }
+  ],
+  "LI": [ // Liechtenstein
+    { name: "Hilti",       sector: "Industry", domain: "hilti.group" },
+    { name: "LGT Bank",    sector: "Banking",  domain: "lgt.com" }
+  ],
+  "MC": [ // Mónaco
+    { name: "Monaco Telecom", sector: "Telecom", domain: "monaco-telecom.mc" },
+    { name: "SBM Monaco",  sector: "Luxury",   domain: "monacosbme.com" }
+  ],
+  "SM": [ // San Marino
+    { name: "Giochi del Titano", sector: "Gaming", domain: "giochideatitano.sm" }
+  ],
+  "AD": [ // Andorra
+    { name: "Andorra Telecom", sector: "Telecom", domain: "andorratelecom.ad" },
+    { name: "Crèdit Andorrà", sector: "Banking", domain: "creand.ad" }
+  ],
+  "VA": [ // Vaticano
+    { name: "Vatican News", sector: "Media",   domain: "vaticannews.va" }
+  ],
+  "XK": [ // Kosovo (Se incluído no teu GeoJSON autónomo)
+    { name: "IPKO",        sector: "Telecom",  domain: "ipko.com" }
+  ]
+
+  
+};
