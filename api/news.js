@@ -1,6 +1,9 @@
 export default async function handler(req, res) {
   const { country = 'DE' } = req.query;
-  const countryMap = { 'PT': 'Portugal', 'ES': 'Spain', 'FR': 'France', 'DE': 'Germany', 
+
+  // Dicionário completo com todos os países do teu EuroScope
+  const countryNames = {
+    'PT': 'Portugal', 'ES': 'Spain', 'FR': 'France', 'DE': 'Germany', 
     'UK': 'United Kingdom', 'IT': 'Italy', 'NL': 'Netherlands', 'BE': 'Belgium',
     'SE': 'Sweden', 'DK': 'Denmark', 'FI': 'Finland', 'NO': 'Norway', 
     'CH': 'Switzerland', 'AT': 'Austria', 'IE': 'Ireland', 'PL': 'Poland',
@@ -11,30 +14,32 @@ export default async function handler(req, res) {
     'TR': 'Turkey', 'RS': 'Serbia', 'BA': 'Bosnia and Herzegovina', 'ME': 'Montenegro',
     'MK': 'North Macedonia', 'AL': 'Albania', 'MD': 'Moldova', 'GE': 'Georgia',
     'AM': 'Armenia', 'AZ': 'Azerbaijan', 'BY': 'Belarus', 'LI': 'Liechtenstein',
-    'MC': 'Monaco', 'SM': 'San Marino', 'AD': 'Andorra', 'VA': 'Vatican City', 'XK': 'Kosovo'};
-  const countryName = countryMap[country] || 'europe';
+    'MC': 'Monaco', 'SM': 'San Marino', 'AD': 'Andorra', 'VA': 'Vatican City', 'XK': 'Kosovo'
+  };
 
-  const rssUrl = `https://news.google.com/rss/search?q=${countryName}+economy+politics&hl=en-US&gl=US&ceid=US:en`;
+  const name = countryNames[country] || 'European Union';
+  
+  // URL formatada para pesquisa precisa
+  const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(name)}+economy+politics&hl=en-US&gl=US&ceid=US:en`;
 
   try {
     const response = await fetch(rssUrl);
     const xml = await response.text();
-    
     const items = [];
-    // Regex melhorada para capturar títulos e links de forma mais robusta
     const itemRegex = /<item>[\s\S]*?<title>(.*?)<\/title>[\s\S]*?<link>(.*?)<\/link>/g;
     let match;
     
-    while ((match = itemRegex.exec(xml)) !== null && items.length < 5) {
+    while ((match = itemRegex.exec(xml)) !== null && items.length < 8) {
       items.push({
         title: match[1].replace('<![CDATA[', '').replace(']]>', ''),
         url: match[2],
         domain: "Google News"
       });
     }
-
-    res.status(200).json({ articles: items });
+    
+    res.setHeader('Cache-Control', 's-maxage=3600');
+    return res.status(200).json({ articles: items });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: "Failed" });
   }
 }
