@@ -51,8 +51,8 @@ export async function fetchNewsForCountry(countryCode, opts = {}) {
   // URL original da API do GDELT
   const gdeltUrl = `https://api.gdeltproject.org/api/v2/doc/doc?${params.toString()}`;
   
-  // SOLUÇÃO CRÍTICA: Passamos o pedido através do corsproxy.io para limpar o 429 e o CORS
-  const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(gdeltUrl)}`;
+  // SOLUÇÃO CRÍTICA: Passamos o pedido através do allorigins.win para limpar o 429 e o CORS
+  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(gdeltUrl)}`;
 
   try {
     console.log(`[News API] A chamar GDELT via Proxy para ${countryCode}`);
