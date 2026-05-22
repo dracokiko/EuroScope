@@ -1,38 +1,48 @@
 // ============================================================
-// newsService.js — client-side fetch via Open CORS Proxy
+// newsService.js — client-side fetch com Fallback Chain
 // ============================================================
 
 import { cntrToGdelt, buildGdeltQuery } from './newsTaxonomy';
 
-/**
- * @typedef {Object} NewsArticle
- * @property {string} title
- * @property {string} url
- * @property {string} domain
- * @property {string|null} source
- * @property {string} seendate
- * @property {string|null} image
- * @property {string|null} language
- */
-
 const CACHE = new Map(); 
 const TTL_MS = 10 * 60 * 1000; // 10 minutos de cache
 
-/**
- * Fetch news for a country bypassing Cloud Workstation IP blocks.
- *
- * @param {string} countryCode  e.g. "PT", "UK", "EL"
- * @param {{ max?: number, signal?: AbortSignal }} [opts]
- * @returns {Promise<{ country: string, articles: NewsArticle[] }>}
- */
+// Função utilitária que tenta vários URLs até um funcionar
+async function fetchWithFallbacks(targetUrl, signal) {
+  const proxies = [
+    targetUrl, // 1º Tenta Direto (Funciona para 99% dos utilizadores reais em casa)
+    `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`, // 2º Tenta AllOrigins
+    `https://corsproxy.io/?${encodeURIComponent(targetUrl)}` // 3º Tenta CorsProxy
+  ];
+
+  let lastError;
+
+  for (const url of proxies) {
+    try {
+      console.log(`[News API] A tentar conexão via: ${url.includes('api.gdelt') ? 'Direto' : url.split('/')[2]}`);
+      const res = await fetch(url, { signal });
+      
+      if (res.ok) {
+        return await res.json();
+      } else {
+        console.warn(`[News API] Falhou (${res.status}). A passar para o próximo...`);
+        lastError = new Error(`HTTP ${res.status}`);
+      }
+    } catch (err) {
+      console.warn(`[News API] Erro de rede (CORS/Timeout). A passar para o próximo...`);
+      lastError = err;
+    }
+  }
+
+  throw lastError; // Se os 3 falharem catastroficamente
+}
+
 export async function fetchNewsForCountry(countryCode, opts = {}) {
   const { max = 10, signal } = opts;
   const cacheKey = `${countryCode}:${max}`;
 
-  // 1. Cache hit
   const cached = CACHE.get(cacheKey);
   if (cached && Date.now() - cached.ts < TTL_MS) {
-    console.log(`[News Cache] Hit para o país: ${countryCode}`);
     return cached.data;
   }
 
@@ -48,24 +58,13 @@ export async function fetchNewsForCountry(countryCode, opts = {}) {
     sort: 'DateDesc'     
   });
 
-  // URL original da API do GDELT
   const gdeltUrl = `https://api.gdeltproject.org/api/v2/doc/doc?${params.toString()}`;
-  
-  // SOLUÇÃO CRÍTICA: Passamos o pedido através do allorigins.win para limpar o 429 e o CORS
-  const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(gdeltUrl)}`;
 
   try {
-    console.log(`[News API] A chamar GDELT via Proxy para ${countryCode}`);
-    const res = await fetch(proxyUrl, { signal });
-
-    if (!res.ok) {
-      throw new Error(`Erro HTTP! Status: ${res.status}`);
-    }
-
-    const rawData = await res.json();
+    // Chama a nossa nova função à prova de falhas
+    const rawData = await fetchWithFallbacks(gdeltUrl, signal);
     const rawArticles = rawData.articles || [];
 
-    // 2. Normalizar os artigos
     const normalizedArticles = rawArticles.map(art => ({
       title: art.title,
       url: art.url,
@@ -81,13 +80,11 @@ export async function fetchNewsForCountry(countryCode, opts = {}) {
       articles: normalizedArticles
     };
 
-    // 3. Salvar na cache interna
     CACHE.set(cacheKey, { ts: Date.now(), data: finalResult });
     return finalResult;
 
   } catch (error) {
-    console.error(`[News API] Erro ao contornar restrições para ${countryCode}:`, error);
-    // Retorno seguro para não quebrar a UI da Sidebar
+    console.error(`[News API] Todos os métodos falharam para ${countryCode}:`, error);
     return { country: countryCode, articles: [] };
   }
 }
