@@ -156,8 +156,8 @@ export default function App() {
   const [regiaoSelecionada, setRegiaoSelecionada] = useState(null);
   const [moduloAtivo, setModuloAtivo] = useState(null);
 
-  const [liveEnergyData, setLiveEnergyData] = useState(null);
-  const [loadingLiveEnergy, setLoadingLiveEnergy] = useState(false);
+  const [energyIntel, setEnergyIntel] = useState(null);
+  const [loadingEnergyIntel, setLoadingEnergyIntel] = useState(false);
 
   // Filtros ativos para Energia (Ports e Industry não usam filtros)
   const [filtrosEnergia, setFiltrosEnergia] = useState([]);
@@ -200,26 +200,32 @@ export default function App() {
     loadAll();
   }, []);
 
-  // Busca os dados da grelha elétrica ao vivo
-  useEffect(() => {
-    if (!paisSelecionado || moduloAtivo !== 'energy') {
-      setLiveEnergyData(null);
-      return;
-    }
+// Busca os dados MACRO (Capacidade Oficial + Ao Vivo)
+useEffect(() => {
+  if (!paisSelecionado || moduloAtivo !== 'energy') {
+    setEnergyIntel(null);
+    return;
+  }
 
-    setLoadingLiveEnergy(true);
-    fetch(`/api/energy?country=${paisSelecionado}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.live_production_mw) {
-          setLiveEnergyData(data.live_production_mw);
-        } else {
-          setLiveEnergyData(null);
-        }
-      })
-      .catch(err => console.error("Falha ao intercetar energia:", err))
-      .finally(() => setLoadingLiveEnergy(false));
-  }, [paisSelecionado, moduloAtivo]);
+  setLoadingEnergyIntel(true);
+  fetch(`/api/energy?country=${paisSelecionado}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data && (data.live_production_mw || data.total_installed_mw)) {
+         setEnergyIntel({
+           live: data.live_production_mw,
+           capacity: data.total_installed_mw
+         });
+      } else {
+        setEnergyIntel(null);
+      }
+    })
+    .catch(err => {
+      console.error("Falha ao intercetar energia:", err);
+      setEnergyIntel(null);
+    })
+    .finally(() => setLoadingEnergyIntel(false));
+}, [paisSelecionado, moduloAtivo]);
 
   // 2. Click COUNTRY
   const clicarNoPais = async (e) => {
@@ -349,14 +355,6 @@ const abrirNews = async () => {
     return filtradas;
   }, [moduloAtivo, filtrosEnergia, paisSelecionado]);
 
-  const statsEnergia = useMemo(() => {
-    if (moduloAtivo !== 'energy' || !paisSelecionado) return null;
-    const centraisDoPais = POWER_PLANTS.filter(p => p.countryCode === paisSelecionado);
-    if (centraisDoPais.length === 0) return null;
-    const totalMW = centraisDoPais.reduce((acc, curr) => acc + curr.capacityMW, 0);
-    const totalTWh = centraisDoPais.reduce((acc, curr) => acc + curr.annualProductionTWh, 0);
-    return { mw: totalMW.toLocaleString(), twh: totalTWh.toFixed(1) };
-  }, [moduloAtivo, paisSelecionado]);
 
   // PORTOS — sem filtros, apenas restrição por país
   const portosRenderizados = useMemo(() => {
@@ -488,49 +486,44 @@ const abrirNews = async () => {
                 {info}
               </div>
 
-             {/* PAINEL DE ESTATÍSTICAS DE ENERGIA DO PAÍS (OTIMIZADO) */}
+             {/* PAINEL DE ESTATÍSTICAS DE ENERGIA DO PAÍS (100% API DATA) */}
              {moduloAtivo === 'energy' && paisSelecionado && (
                 <div style={{ marginTop: '12px', padding: '16px', background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8))', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.2)', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', animation: 'fadeIn 0.4s ease' }}>
                   <h3 style={{ fontSize: '11px', color: '#10b981', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>⚡ Energy Overview Detectado</h3>
                   
-                  {/* DADOS HISTÓRICOS (Só aparecem se houver centrais mapeadas no powerPlants.js) */}
-                  {statsEnergia ? (
-                    <>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>Capacidade Histórica:</span>
-                        <strong style={{ color: '#fff', fontSize: '13px' }}>{statsEnergia.mw} MW</strong>
-                      </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>Produção Anual:</span>
-                        <strong style={{ color: '#fff', fontSize: '13px' }}>{statsEnergia.twh} TWh</strong>
-                      </div>
-                    </>
+                  {loadingEnergyIntel ? (
+                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">A calcular agregados nacionais...</span>
+                  ) : energyIntel && energyIntel.capacity ? (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                      <span style={{ color: '#94a3b8', fontSize: '12px' }}>Capacidade Nacional Total:</span>
+                      <strong style={{ color: '#fff', fontSize: '13px' }}>{(energyIntel.capacity / 1000).toFixed(1)} GW</strong>
+                    </div>
                   ) : (
                     <div style={{ fontSize: '11px', color: '#475569', marginBottom: '12px', fontStyle: 'italic' }}>
-                      Nenhuma infraestrutura mapeada na base de dados local.
+                      Dados estruturais do país indisponíveis.
                     </div>
                   )}
 
-                  {/* BLOCO AO VIVO (Independente das centrais estáticas, aparece SEMPRE) */}
+                  {/* BLOCO AO VIVO */}
                   <div style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)', paddingTop: '12px', marginTop: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                       <span className="animate-pulse" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }}></span>
                       <span style={{ color: '#10b981', fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Live Grid Intel</span>
                     </div>
 
-                    {loadingLiveEnergy ? (
-                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">A intercetar sensores nacionais...</span>
-                    ) : liveEnergyData ? (
+                    {loadingEnergyIntel ? (
+                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">A intercetar sensores...</span>
+                    ) : energyIntel && energyIntel.live ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         
-                        {liveEnergyData['Renewable share of generation'] && (
+                        {energyIntel.live['Renewable share of generation'] && (
                           <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '6px', padding: '6px 8px', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
                             <span style={{ color: '#10b981', fontSize: '11px', fontWeight: 600 }}>Renewable Share:</span>
-                            <strong style={{ color: '#10b981', fontSize: '11px' }}>{liveEnergyData['Renewable share of generation'].toFixed(1)}%</strong>
+                            <strong style={{ color: '#10b981', fontSize: '11px' }}>{energyIntel.live['Renewable share of generation'].toFixed(1)}%</strong>
                           </div>
                         )}
 
-                        {Object.entries(liveEnergyData)
+                        {Object.entries(energyIntel.live)
                           .filter(([key]) => !key.includes('share') && key !== 'Load' && key !== 'Residual load')
                           .sort((a, b) => b[1] - a[1])
                           .slice(0, 4)
