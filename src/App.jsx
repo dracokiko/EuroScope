@@ -8,9 +8,6 @@ import { POWER_PLANTS } from './powerPlants';
 import { PORTS_DATA } from './portsData';
 import { INDUSTRY_DATA } from './industryData';
 import { fetchNewsForCountry, formatNewsDate } from './newsService';
-const [liveEnergyData, setLiveEnergyData] = useState(null);
-const [loadingLiveEnergy, setLoadingLiveEnergy] = useState(false);
-
 
 const URL_BASE = "/data/mundo_base.geojson";
 const URL_PAISES = "/data/paises.geojson";
@@ -38,24 +35,6 @@ function BrandLogo({ domain, name }) {
       </div>
     );
   }
-// Busca os dados da grelha elétrica ao vivo
-useEffect(() => {
-  if (!paisSelecionado || moduloAtivo !== 'energy') {
-    setLiveEnergyData(null);
-    return;
-  }
-
-  setLoadingLiveEnergy(true);
-  fetch(`/api/energy?country=${paisSelecionado}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.live_production_mw) {
-        setLiveEnergyData(data.live_production_mw);
-      }
-    })
-    .catch(err => console.error("Falha ao intercetar energia:", err))
-    .finally(() => setLoadingLiveEnergy(false));
-}, [paisSelecionado, moduloAtivo]);
 
   const sources = [
     `https://img.logo.dev/${domain}?token=pk_X-1ZO13GSgeOoUrIuJ6GMQ&size=120&format=png`,
@@ -175,6 +154,10 @@ export default function App() {
   const [regiaoSelecionada, setRegiaoSelecionada] = useState(null);
   const [moduloAtivo, setModuloAtivo] = useState(null);
 
+  // --- AQUI ESTÃO OS ESTADOS CORRIGIDOS (Dentro da função App) ---
+  const [liveEnergyData, setLiveEnergyData] = useState(null);
+  const [loadingLiveEnergy, setLoadingLiveEnergy] = useState(false);
+
   // Filtros ativos para Energia (Ports e Industry não usam filtros)
   const [filtrosEnergia, setFiltrosEnergia] = useState([]);
 
@@ -215,6 +198,26 @@ export default function App() {
     };
     loadAll();
   }, []);
+
+  // --- O CÉREBRO QUE BUSCA OS DADOS DE ENERGIA AO VIVO ---
+  useEffect(() => {
+    if (!paisSelecionado || moduloAtivo !== 'energy') {
+      setLiveEnergyData(null);
+      return;
+    }
+
+    setLoadingLiveEnergy(true);
+    fetch(`/api/energy?country=${paisSelecionado}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.live_production_mw) {
+          setLiveEnergyData(data.live_production_mw);
+        }
+      })
+      .catch(err => console.error("Falha ao intercetar energia:", err))
+      .finally(() => setLoadingLiveEnergy(false));
+  }, [paisSelecionado, moduloAtivo]);
+
 
   // 2. Click COUNTRY
   const clicarNoPais = async (e) => {
@@ -483,7 +486,7 @@ const abrirNews = async () => {
                 {info}
               </div>
 
-              {/* PAINEL DE ESTATÍSTICAS DE ENERGIA DO PAÍS */}
+              {/* === PAINEL DE ESTATÍSTICAS DE ENERGIA DO PAÍS (AGORA COM AO VIVO) === */}
               {moduloAtivo === 'energy' && statsEnergia && (
                 <div style={{ marginTop: '12px', padding: '16px', background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8))', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.2)', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', animation: 'fadeIn 0.4s ease' }}>
                   <h3 style={{ fontSize: '11px', color: '#10b981', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>⚡ Energy Overview Detectado</h3>
@@ -498,7 +501,7 @@ const abrirNews = async () => {
                     <strong style={{ color: '#fff', fontSize: '13px' }}>{statsEnergia.twh} TWh</strong>
                   </div>
 
-                  {/* === BLOCO AO VIVO (A MAGIA) === */}
+                  {/* BLOCO AO VIVO */}
                   <div style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)', paddingTop: '12px', marginTop: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                       <span className="animate-pulse" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }}></span>
