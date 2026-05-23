@@ -1,38 +1,36 @@
 // /api/energy.js
 
 export default async function handler(req, res) {
-    // Recebe o país do teu frontend (ex: 'DE', 'PT', 'FR')
+    // Recebe o país do teu frontend (ex: 'PT' ou 'DE')
     const { country = 'DE' } = req.query;
   
     try {
-      // A porta das traseiras: API aberta do Fraunhofer Institute
-      const response = await fetch(`https://api.energy-charts.info/public_power?country=${country}`);
+      // 1. TRUQUE: A API do Fraunhofer só aceita códigos minúsculos ('pt', 'de')
+      const lowerCountry = country.toLowerCase();
+  
+      // 2. Faz o pedido à base de dados europeia
+      const response = await fetch(`https://api.energy-charts.info/public_power?country=${lowerCountry}`);
       
       if (!response.ok) {
-        throw new Error('Falha ao comunicar com os sensores europeus.');
+        // Se falhar, agora vai dizer-te o erro exato que o servidor alemão devolveu
+        throw new Error(`A API rejeitou o pedido: HTTP ${response.status}`);
       }
   
       const data = await response.json();
-  
-      // O Fraunhofer devolve um array com várias fontes (Nuclear, Hydro, Solar, etc.)
-      // Vamos extrair o último valor registado (o momento atual) de cada fonte.
       const liveProduction = {};
   
       data.forEach(source => {
-        // O nome da fonte (ex: "Nuclear", "Hydro Run-of-River", "Solar")
         const type = source.name;
-        
-        // O array de valores (em MW). Vamos buscar o último (mais recente)
         const values = source.data;
+        
+        // Vamos buscar o último valor registado (o mais recente hoje)
         const currentMW = values[values.length - 1]; 
   
-        // Guardamos apenas se for um valor válido
         if (currentMW !== null && currentMW !== undefined) {
           liveProduction[type] = currentMW;
         }
       });
   
-      // Devolvemos para o teu mapa um objeto limpo com o que está a ser produzido AGORA
       return res.status(200).json({
         country: country,
         timestamp: new Date().toISOString(),
