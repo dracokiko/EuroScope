@@ -1008,7 +1008,7 @@ const abrirNews = async () => {
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       
-                      {/* 1. TÍTULO LIMPO (Sem o nome do jornal colado no fim) */}
+                      {/* 1. TÍTULO LIMPO */}
                       <p style={{
                         color: '#fff', fontSize: '13px', fontWeight: 700,
                         margin: 0, lineHeight: 1.35,
@@ -1022,7 +1022,7 @@ const abrirNews = async () => {
                           : art.title}
                       </p>
                       
-                      {/* 2. JORNAL EM DESTAQUE AZUL (A NOVIDADE!) */}
+                      {/* 2. NOME DO JORNAL EXTRAÍDO DIRETAMENTE DO TÍTULO */}
                       <p style={{
                         margin: '4px 0 0 0',
                         fontSize: '11px',
@@ -1032,7 +1032,9 @@ const abrirNews = async () => {
                         alignItems: 'center',
                         gap: '4px'
                       }}>
-                        📰 {art.source}
+                        📰 {art.title.includes(' - ') 
+                              ? art.title.substring(art.title.lastIndexOf(' - ') + 3).trim() 
+                              : (art.source || 'Fonte Externa')}
                       </p>
 
                       {/* 3. DATA E SCORE */}
