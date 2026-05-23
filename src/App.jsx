@@ -8,6 +8,9 @@ import { POWER_PLANTS } from './powerPlants';
 import { PORTS_DATA } from './portsData';
 import { INDUSTRY_DATA } from './industryData';
 import { fetchNewsForCountry, formatNewsDate } from './newsService';
+const [liveEnergyData, setLiveEnergyData] = useState(null);
+const [loadingLiveEnergy, setLoadingLiveEnergy] = useState(false);
+
 
 const URL_BASE = "/data/mundo_base.geojson";
 const URL_PAISES = "/data/paises.geojson";
@@ -154,10 +157,6 @@ export default function App() {
   const [regiaoSelecionada, setRegiaoSelecionada] = useState(null);
   const [moduloAtivo, setModuloAtivo] = useState(null);
 
-  // --- AQUI ESTÃO OS ESTADOS CORRIGIDOS (Dentro da função App) ---
-  const [liveEnergyData, setLiveEnergyData] = useState(null);
-  const [loadingLiveEnergy, setLoadingLiveEnergy] = useState(false);
-
   // Filtros ativos para Energia (Ports e Industry não usam filtros)
   const [filtrosEnergia, setFiltrosEnergia] = useState([]);
 
@@ -198,26 +197,6 @@ export default function App() {
     };
     loadAll();
   }, []);
-
-  // --- O CÉREBRO QUE BUSCA OS DADOS DE ENERGIA AO VIVO ---
-  useEffect(() => {
-    if (!paisSelecionado || moduloAtivo !== 'energy') {
-      setLiveEnergyData(null);
-      return;
-    }
-
-    setLoadingLiveEnergy(true);
-    fetch(`/api/energy?country=${paisSelecionado}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.live_production_mw) {
-          setLiveEnergyData(data.live_production_mw);
-        }
-      })
-      .catch(err => console.error("Falha ao intercetar energia:", err))
-      .finally(() => setLoadingLiveEnergy(false));
-  }, [paisSelecionado, moduloAtivo]);
-
 
   // 2. Click COUNTRY
   const clicarNoPais = async (e) => {
@@ -486,56 +465,17 @@ const abrirNews = async () => {
                 {info}
               </div>
 
-              {/* === PAINEL DE ESTATÍSTICAS DE ENERGIA DO PAÍS (AGORA COM AO VIVO) === */}
+              {/* PAINEL DE ESTATÍSTICAS DE ENERGIA DO PAÍS */}
               {moduloAtivo === 'energy' && statsEnergia && (
                 <div style={{ marginTop: '12px', padding: '16px', background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8))', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.2)', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', animation: 'fadeIn 0.4s ease' }}>
                   <h3 style={{ fontSize: '11px', color: '#10b981', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>⚡ Energy Overview Detectado</h3>
-                  
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '12px' }}>Capacidade Histórica:</span>
+                    <span style={{ color: '#94a3b8', fontSize: '12px' }}>Capacidade Instalada:</span>
                     <strong style={{ color: '#fff', fontSize: '13px' }}>{statsEnergia.mw} MW</strong>
                   </div>
-                  
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span style={{ color: '#94a3b8', fontSize: '12px' }}>Produção Anual:</span>
                     <strong style={{ color: '#fff', fontSize: '13px' }}>{statsEnergia.twh} TWh</strong>
-                  </div>
-
-                  {/* BLOCO AO VIVO */}
-                  <div style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)', paddingTop: '12px', marginTop: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-                      <span className="animate-pulse" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }}></span>
-                      <span style={{ color: '#10b981', fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Live Grid Intel</span>
-                    </div>
-
-                    {loadingLiveEnergy ? (
-                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">A intercetar sensores nacionais...</span>
-                    ) : liveEnergyData ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        
-                        {/* Destaque para a quota renovável, se a API enviar */}
-                        {liveEnergyData['Renewable share of generation'] && (
-                          <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '6px', padding: '6px 8px', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: '#10b981', fontSize: '11px', fontWeight: 600 }}>Renewable Share:</span>
-                            <strong style={{ color: '#10b981', fontSize: '11px' }}>{liveEnergyData['Renewable share of generation'].toFixed(1)}%</strong>
-                          </div>
-                        )}
-
-                        {/* Top 4 fontes de energia do país agora */}
-                        {Object.entries(liveEnergyData)
-                          .filter(([key]) => !key.includes('share') && key !== 'Load' && key !== 'Residual load')
-                          .sort((a, b) => b[1] - a[1]) // Ordenar pelas que produzem mais
-                          .slice(0, 4) // Mostrar só as 4 principais
-                          .map(([source, mw]) => (
-                          <div key={source} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', padding: '2px 0' }}>
-                            <span style={{ color: '#94a3b8' }}>{source}:</span>
-                            <strong style={{ color: '#e2e8f0' }}>{mw.toFixed(0)} MW</strong>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <span style={{ color: '#475569', fontSize: '11px' }}>Sem sinal em tempo real (FIPS isolado).</span>
-                    )}
                   </div>
                 </div>
               )}
