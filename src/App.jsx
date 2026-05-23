@@ -1007,6 +1007,8 @@ const abrirNews = async () => {
                       />
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
+                      
+                      {/* 1. TÍTULO */}
                       <p style={{
                         color: '#fff', fontSize: '13px', fontWeight: 700,
                         margin: 0, lineHeight: 1.35,
@@ -1017,33 +1019,45 @@ const abrirNews = async () => {
                       }}>
                         {art.title}
                       </p>
+                      
+                      {/* 2. JORNAL EM DESTAQUE AZUL (A NOVIDADE!) */}
                       <p style={{
-  color: '#64748b',
-  fontSize: '10px',
-  margin: '6px 0 0 0',
-  fontWeight: 600,
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-  display: 'flex',
-  gap: '8px',
-  alignItems: 'center'
-}}>
-  {process.env.NODE_ENV === 'development' && (
-  <div style={{
-    marginTop: '6px',
-    fontSize: '10px',
-    color: '#facc15',
-    fontWeight: 700
-  }}>
-    Score: {art.score.toFixed(1)}
-  </div>
-)}
-  <span>{art.source}</span>
+                        margin: '4px 0 0 0',
+                        fontSize: '11px',
+                        color: '#3b82f6',
+                        fontWeight: 600,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}>
+                        📰 {art.source}
+                      </p>
 
-  <span style={{ opacity: 0.5 }}>·</span>
+                      {/* 3. DATA E SCORE */}
+                      <div style={{
+                        color: '#64748b',
+                        fontSize: '10px',
+                        margin: '6px 0 0 0',
+                        fontWeight: 600,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px',
+                        display: 'flex',
+                        gap: '8px',
+                        alignItems: 'center'
+                      }}>
+                        {process.env.NODE_ENV === 'development' && (
+                          <span style={{ color: '#facc15', fontWeight: 700 }}>
+                            Score: {art.score.toFixed(1)}
+                          </span>
+                        )}
+                        
+                        {process.env.NODE_ENV === 'development' && (
+                          <span style={{ opacity: 0.5 }}>·</span>
+                        )}
 
-  <span>{formatNewsDate(art.pubDate)}</span>
-</p>
+                        <span>{formatNewsDate(art.pubDate)}</span>
+                      </div>
+                      
                     </div>
                   </a>
                 ))}
