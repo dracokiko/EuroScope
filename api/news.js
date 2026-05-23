@@ -34,7 +34,7 @@ export default async function handler(req, res) {
           score: scoreArticle(item, config)
         };
       })
-      .filter(a => a.score >= 5)
+      .filter(a => a.score >= 0)
       .sort((a, b) => b.score - a.score)
       .slice(0, 10);
 
