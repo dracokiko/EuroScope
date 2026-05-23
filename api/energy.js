@@ -1,19 +1,23 @@
 // /api/energy.js
 
 export default async function handler(req, res) {
-    // Recebe o país do teu frontend (ex: 'PT' ou 'DE')
-    const { country = 'DE' } = req.query;
+    const { country = 'PT' } = req.query;
   
     try {
-      // 1. TRUQUE: A API do Fraunhofer só aceita códigos minúsculos ('pt', 'de')
+      // 1. O país TEM de estar em minúsculas para esta API funcionar
       const lowerCountry = country.toLowerCase();
   
-      // 2. Faz o pedido à base de dados europeia
-      const response = await fetch(`https://api.energy-charts.info/public_power?country=${lowerCountry}`);
+      // 2. Fazemos o pedido com um "Disfarce" (User-Agent) para não sermos bloqueados pela firewall alemã
+      const response = await fetch(`https://api.energy-charts.info/public_power?country=${lowerCountry}`, {
+        headers: {
+          'Accept': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
+      });
       
+      // 3. Se falhar, a nova mensagem VAI DIZER O CÓDIGO DO ERRO
       if (!response.ok) {
-        // Se falhar, agora vai dizer-te o erro exato que o servidor alemão devolveu
-        throw new Error(`A API rejeitou o pedido: HTTP ${response.status}`);
+        throw new Error(`A API alemã rejeitou o pedido (Erro HTTP ${response.status})`);
       }
   
       const data = await response.json();
@@ -23,7 +27,7 @@ export default async function handler(req, res) {
         const type = source.name;
         const values = source.data;
         
-        // Vamos buscar o último valor registado (o mais recente hoje)
+        // Vamos buscar o último valor registado hoje
         const currentMW = values[values.length - 1]; 
   
         if (currentMW !== null && currentMW !== undefined) {
@@ -38,6 +42,7 @@ export default async function handler(req, res) {
       });
   
     } catch (err) {
-      return res.status(500).json({ error: 'Erro de ligação: ' + err.message });
+      // AQUI ESTÁ A NOVA MENSAGEM. Se vires a antiga, o deploy não atualizou!
+      return res.status(500).json({ error: 'Erro de Servidor: ' + err.message });
     }
   }
