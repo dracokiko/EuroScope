@@ -211,8 +211,10 @@ export default function App() {
     fetch(`/api/energy?country=${paisSelecionado}`)
       .then(res => res.json())
       .then(data => {
-        if (data.live_production_mw) {
+        if (data && data.live_production_mw) {
           setLiveEnergyData(data.live_production_mw);
+        } else {
+          setLiveEnergyData(null);
         }
       })
       .catch(err => console.error("Falha ao intercetar energia:", err))

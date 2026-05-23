@@ -6,24 +6,27 @@ export default async function handler(req, res) {
     try {
       const lowerCountry = country.toLowerCase();
   
-      // 1. Lança os sensores
-      const response = await fetch(`https://api.energy-charts.info/public_power?country=${lowerCountry}`, {
+      // 1. O TRUQUE DA CINDERELA: Pedir sempre os dados de Ontem + Hoje
+      const today = new Date();
+      const endDate = today.toISOString().split('T')[0]; // Data de Hoje
+      
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const startDate = yesterday.toISOString().split('T')[0]; // Data de Ontem
+  
+      // 2. Injetar as datas no URL
+      const response = await fetch(`https://api.energy-charts.info/public_power?country=${lowerCountry}&start=${startDate}&end=${endDate}`, {
         headers: {
           'Accept': 'application/json',
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         }
       });
       
-      // 2. A BLINDAGEM: Se o país bloquear os dados (Erro 404 ou 400)
+      // 3. Blindagem contra Países sem Dados (Erro 404/400)
       if (response.status === 404 || response.status === 400) {
-        return res.status(200).json({
-          country: country,
-          timestamp: new Date().toISOString(),
-          live_production_mw: null // O frontend vai ler isto e mostrar "Live data is not available"
-        });
+        return res.status(200).json({ country, timestamp: new Date().toISOString(), live_production_mw: null });
       }
   
-      // Se for outro erro grave, aí sim alertamos
       if (!response.ok) {
         throw new Error(`A API rejeitou o pedido (Erro HTTP ${response.status})`);
       }
@@ -37,6 +40,7 @@ export default async function handler(req, res) {
           const values = source.data;
           
           let currentMW = 0;
+          // Percorre de trás para a frente (do momento mais recente para o passado)
           for (let i = values.length - 1; i >= 0; i--) {
             if (values[i] !== null && values[i] !== undefined) {
               currentMW = values[i];
@@ -50,7 +54,6 @@ export default async function handler(req, res) {
         });
       }
   
-      // 3. Devolve os dados ou null se o objeto estiver vazio
       return res.status(200).json({
         country: country,
         timestamp: new Date().toISOString(),
