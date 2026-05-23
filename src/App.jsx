@@ -1008,7 +1008,7 @@ const abrirNews = async () => {
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       
-                      {/* 1. TÍTULO */}
+                      {/* 1. TÍTULO LIMPO (Sem o nome do jornal colado no fim) */}
                       <p style={{
                         color: '#fff', fontSize: '13px', fontWeight: 700,
                         margin: 0, lineHeight: 1.35,
@@ -1017,7 +1017,9 @@ const abrirNews = async () => {
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden'
                       }}>
-                        {art.title}
+                        {art.title.includes(' - ') 
+                          ? art.title.substring(0, art.title.lastIndexOf(' - ')) 
+                          : art.title}
                       </p>
                       
                       {/* 2. JORNAL EM DESTAQUE AZUL (A NOVIDADE!) */}
