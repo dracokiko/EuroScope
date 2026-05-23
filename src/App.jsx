@@ -8,8 +8,7 @@ import { POWER_PLANTS } from './powerPlants';
 import { PORTS_DATA } from './portsData';
 import { INDUSTRY_DATA } from './industryData';
 import { fetchNewsForCountry, formatNewsDate } from './newsService';
-const [liveEnergyData, setLiveEnergyData] = useState(null);
-const [loadingLiveEnergy, setLoadingLiveEnergy] = useState(false);
+
 
 
 const URL_BASE = "/data/mundo_base.geojson";
