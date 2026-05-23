@@ -486,22 +486,30 @@ const abrirNews = async () => {
                 {info}
               </div>
 
-             {/* PAINEL DE ESTATÍSTICAS DE ENERGIA DO PAÍS */}
-             {moduloAtivo === 'energy' && statsEnergia && (
+             {/* PAINEL DE ESTATÍSTICAS DE ENERGIA DO PAÍS (OTIMIZADO) */}
+             {moduloAtivo === 'energy' && paisSelecionado && (
                 <div style={{ marginTop: '12px', padding: '16px', background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8))', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.2)', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', animation: 'fadeIn 0.4s ease' }}>
                   <h3 style={{ fontSize: '11px', color: '#10b981', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>⚡ Energy Overview Detectado</h3>
                   
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '12px' }}>Capacidade Histórica:</span>
-                    <strong style={{ color: '#fff', fontSize: '13px' }}>{statsEnergia.mw} MW</strong>
-                  </div>
-                  
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
-                    <span style={{ color: '#94a3b8', fontSize: '12px' }}>Produção Anual:</span>
-                    <strong style={{ color: '#fff', fontSize: '13px' }}>{statsEnergia.twh} TWh</strong>
-                  </div>
+                  {/* DADOS HISTÓRICOS (Só aparecem se houver centrais mapeadas no powerPlants.js) */}
+                  {statsEnergia ? (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>Capacidade Histórica:</span>
+                        <strong style={{ color: '#fff', fontSize: '13px' }}>{statsEnergia.mw} MW</strong>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>Produção Anual:</span>
+                        <strong style={{ color: '#fff', fontSize: '13px' }}>{statsEnergia.twh} TWh</strong>
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ fontSize: '11px', color: '#475569', marginBottom: '12px', fontStyle: 'italic' }}>
+                      Nenhuma infraestrutura mapeada na base de dados local.
+                    </div>
+                  )}
 
-                  {/* === BLOCO AO VIVO (A MAGIA) === */}
+                  {/* BLOCO AO VIVO (Independente das centrais estáticas, aparece SEMPRE) */}
                   <div style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)', paddingTop: '12px', marginTop: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                       <span className="animate-pulse" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }}></span>
@@ -513,7 +521,6 @@ const abrirNews = async () => {
                     ) : liveEnergyData ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         
-                        {/* Destaque para a quota renovável, se a API enviar */}
                         {liveEnergyData['Renewable share of generation'] && (
                           <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '6px', padding: '6px 8px', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
                             <span style={{ color: '#10b981', fontSize: '11px', fontWeight: 600 }}>Renewable Share:</span>
@@ -521,11 +528,10 @@ const abrirNews = async () => {
                           </div>
                         )}
 
-                        {/* Top 4 fontes de energia do país agora */}
                         {Object.entries(liveEnergyData)
                           .filter(([key]) => !key.includes('share') && key !== 'Load' && key !== 'Residual load')
-                          .sort((a, b) => b[1] - a[1]) // Ordenar pelas que produzem mais
-                          .slice(0, 4) // Mostrar só as 4 principais
+                          .sort((a, b) => b[1] - a[1])
+                          .slice(0, 4)
                           .map(([source, mw]) => (
                           <div key={source} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', padding: '2px 0' }}>
                             <span style={{ color: '#94a3b8' }}>{source}:</span>
