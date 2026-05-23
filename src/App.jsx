@@ -878,348 +878,177 @@ const abrirNews = async () => {
           }}
         >
           <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              background: 'linear-gradient(160deg, #0b1120 0%, #0f172a 60%, #1a1f3a 100%)',
-              border: '1px solid rgba(168, 85, 247, 0.25)',
-              borderRadius: '20px',
-              padding: '28px 28px 24px 28px',
-              maxWidth: '720px',
-              width: '92%',
-              maxHeight: '86vh',
-              overflowY: 'auto',
-              boxShadow: '0 25px 70px rgba(0,0,0,0.7), 0 0 0 1px rgba(168, 85, 247, 0.08), inset 0 1px 0 rgba(255,255,255,0.04)',
-              position: 'relative',
-              fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif'
-            }}
+      onClick={(e) => e.stopPropagation()}
+      style={{
+        background: 'linear-gradient(160deg, #0b1120 0%, #0f172a 60%, #1a1f3a 100%)',
+        border: '1px solid rgba(168, 85, 247, 0.25)',
+        borderRadius: '20px',
+        padding: '28px 28px 24px 28px',
+        maxWidth: '720px',
+        width: '92%',
+        maxHeight: '86vh',
+        overflowY: 'auto',
+        boxShadow: '0 25px 70px rgba(0,0,0,0.7), 0 0 0 1px rgba(168, 85, 247, 0.08), inset 0 1px 0 rgba(255,255,255,0.04)',
+        position: 'relative',
+        fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif'
+      }}
           >
-            {/* Subtle radial overlay for "terminal" feel */}
-            <div style={{
-              position: 'absolute', top: 0, left: 0, right: 0, height: '120px',
-              background: 'radial-gradient(circle at 20% 0%, rgba(168, 85, 247, 0.12), transparent 60%)',
-              borderRadius: '20px 20px 0 0',
-              pointerEvents: 'none'
-            }} />
+
+        {/* Subtle grid pattern overlay for "terminal" feel */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, height: '120px',
+        background: 'radial-gradient(circle at 20% 0%, rgba(168, 85, 247, 0.12), transparent 60%)',
+        borderRadius: '20px 20px 0 0',
+        pointerEvents: 'none'
+      }} />
 
             <button
-              onClick={() => setNewsAberto(false)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
-                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
-                e.currentTarget.style.color = '#fca5a5';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
-                e.currentTarget.style.color = '#94a3b8';
-              }}
-              style={{
-                position: 'absolute', top: '16px', right: '16px',
-                width: '32px', height: '32px',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.1)',
-                borderRadius: '8px',
-                color: '#94a3b8',
-                cursor: 'pointer', fontSize: '14px',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                transition: 'all 0.18s ease',
-                zIndex: 2
-              }}
+        onClick={() => setNewsAberto(false)}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
+          e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+          e.currentTarget.style.color = '#fca5a5';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.background = 'rgba(255,255,255,0.05)';
+          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)';
+          e.currentTarget.style.color = '#94a3b8';
+        }}
+        style={{
+          position: 'absolute', top: '16px', right: '16px',
+          width: '32px', height: '32px',
+          background: 'rgba(255,255,255,0.05)',
+          border: '1px solid rgba(255,255,255,0.1)',
+          borderRadius: '8px',
+          color: '#94a3b8',
+          cursor: 'pointer', fontSize: '14px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          transition: 'all 0.18s ease',
+          zIndex: 2
+        }}
             >
               ✕
             </button>
 
-            {/* HEADER */}
-            <div style={{ marginBottom: '22px', position: 'relative', zIndex: 1 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span style={{
-                  width: '6px', height: '6px', borderRadius: '50%',
-                  background: '#a855f7',
-                  boxShadow: '0 0 8px rgba(168, 85, 247, 0.8)',
-                  animation: 'pulse 2s ease-in-out infinite'
-                }} />
-                <p style={{
-                  fontSize: '10px', color: '#a855f7', fontWeight: 800,
-                  letterSpacing: '2px', margin: 0, textTransform: 'uppercase',
-                  fontFamily: '"SF Mono", Monaco, Consolas, monospace'
-                }}>
-                  INTELLIGENCE FEED · LIVE
-                </p>
-              </div>
-              <h2 style={{
-                color: '#fff', fontSize: '26px', fontWeight: 800,
-                margin: '4px 0 0 0', letterSpacing: '-0.8px',
-                background: 'linear-gradient(90deg, #fff, #cbd5e1)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text'
-              }}>
+            <div style={{ marginBottom: '20px' }}>
+              <p style={{ fontSize: '11px', color: '#a855f7', fontWeight: '700', letterSpacing: '1.5px', margin: 0, textTransform: 'uppercase' }}>
+                📰 Latest News
+              </p>
+              <h2 style={{ color: '#fff', fontSize: '24px', fontWeight: '800', margin: '6px 0 0 0', letterSpacing: '-0.5px' }}>
                 {nomePaisAtual}
               </h2>
-              <p style={{
-                fontSize: '11px', color: '#64748b', margin: '6px 0 0 0',
-                fontFamily: '"SF Mono", Monaco, Consolas, monospace',
-                letterSpacing: '0.5px'
-              }}>
-                ECONOMY · POLITICS · GEOPOLITICS
+              <p style={{ fontSize: '12px', color: '#64748b', margin: '4px 0 0 0' }}>
+                Economy · Politics · Geopolitics · Today
               </p>
             </div>
 
-            {/* LOADING */}
             {newsLoading && (
-              <div style={{
-                padding: '60px 20px', textAlign: 'center',
-                color: '#94a3b8', fontSize: '12px',
-                fontFamily: '"SF Mono", Monaco, Consolas, monospace',
-                letterSpacing: '1px'
-              }}>
-                <div style={{
-                  display: 'inline-block',
-                  width: '24px', height: '24px',
-                  border: '2px solid rgba(168, 85, 247, 0.2)',
-                  borderTopColor: '#a855f7',
-                  borderRadius: '50%',
-                  animation: 'spin 0.8s linear infinite',
-                  marginBottom: '14px'
-                }} />
-                <div>QUERYING SOURCES...</div>
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+                Loading news…
               </div>
             )}
 
-            {/* ERROR */}
             {!newsLoading && newsError && (
               <div style={{
-                padding: '20px', textAlign: 'left',
-                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(239, 68, 68, 0.03))',
-                border: '1px solid rgba(239, 68, 68, 0.25)',
-                borderLeft: '3px solid #ef4444',
-                borderRadius: '10px',
-                color: '#fca5a5', fontSize: '12px',
-                fontFamily: '"SF Mono", Monaco, Consolas, monospace'
+                padding: '24px', textAlign: 'center',
+                background: 'rgba(239, 68, 68, 0.08)',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                borderRadius: '14px', color: '#fca5a5', fontSize: '13px'
               }}>
-                <div style={{
-                  fontSize: '10px', color: '#ef4444', fontWeight: 800,
-                  letterSpacing: '1.5px', marginBottom: '6px'
-                }}>
-                  ⚠ FEED ERROR
-                </div>
                 {newsError}
               </div>
             )}
 
-            {/* EMPTY */}
             {!newsLoading && !newsError && newsArticles.length === 0 && (
-              <div style={{
-                padding: '50px 20px', textAlign: 'center',
-                color: '#64748b', fontSize: '12px',
-                fontFamily: '"SF Mono", Monaco, Consolas, monospace',
-                letterSpacing: '1px',
-                border: '1px dashed rgba(255,255,255,0.08)',
-                borderRadius: '12px'
-              }}>
-                NO RECENT SIGNALS DETECTED
+              <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
+                No recent articles for this country.
               </div>
             )}
 
-            {/* ARTICLES */}
             {!newsLoading && !newsError && newsArticles.length > 0 && (
-              <>
-                {/* Counter row */}
-                <div style={{
-                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                  padding: '8px 12px', marginBottom: '12px',
-                  background: 'rgba(168, 85, 247, 0.05)',
-                  border: '1px solid rgba(168, 85, 247, 0.12)',
-                  borderRadius: '8px',
-                  fontFamily: '"SF Mono", Monaco, Consolas, monospace',
-                  fontSize: '10px', letterSpacing: '1px'
-                }}>
-                  <span style={{ color: '#a855f7', fontWeight: 700 }}>
-                    {newsArticles.length} SIGNALS
-                  </span>
-                  <span style={{ color: '#64748b' }}>
-                    SORTED BY RELEVANCE
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {newsArticles.map((art, i) => {
-                    // Score → relevance tier
-                    const score = art.score || 0;
-                    let tierColor, tierBg, tierLabel, tierGlow;
-                    if (score >= 12) {
-                      tierColor = '#22c55e';
-                      tierBg = 'rgba(34, 197, 94, 0.12)';
-                      tierLabel = 'HIGH';
-                      tierGlow = 'rgba(34, 197, 94, 0.35)';
-                    } else if (score >= 6) {
-                      tierColor = '#eab308';
-                      tierBg = 'rgba(234, 179, 8, 0.12)';
-                      tierLabel = 'MED';
-                      tierGlow = 'rgba(234, 179, 8, 0.3)';
-                    } else {
-                      tierColor = '#94a3b8';
-                      tierBg = 'rgba(148, 163, 184, 0.1)';
-                      tierLabel = 'LOW';
-                      tierGlow = 'rgba(148, 163, 184, 0.2)';
-                    }
-
-                    // Source → deterministic color hash
-                    const sourceColors = [
-                      { fg: '#60a5fa', bg: 'rgba(96, 165, 250, 0.12)' },
-                      { fg: '#f472b6', bg: 'rgba(244, 114, 182, 0.12)' },
-                      { fg: '#34d399', bg: 'rgba(52, 211, 153, 0.12)' },
-                      { fg: '#fbbf24', bg: 'rgba(251, 191, 36, 0.12)' },
-                      { fg: '#a78bfa', bg: 'rgba(167, 139, 250, 0.12)' },
-                      { fg: '#22d3ee', bg: 'rgba(34, 211, 238, 0.12)' }
-                    ];
-                    const sourceStr = art.source || 'unknown';
-                    const sourceHash = sourceStr.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-                    const sourceColor = sourceColors[sourceHash % sourceColors.length];
-
-                    // Relevance bar width (cap at 20)
-                    const barWidth = Math.min(100, Math.max(8, (score / 20) * 100));
-
-                    return (
-                      <a
-                        key={i}
-                        href={art.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.background = 'linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(168, 85, 247, 0.02))';
-                          e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.35)';
-                          e.currentTarget.style.transform = 'translateY(-2px) scale(1.005)';
-                          e.currentTarget.style.boxShadow = `0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px ${tierGlow}`;
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.background = 'rgba(255,255,255,0.025)';
-                          e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                          e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                          e.currentTarget.style.boxShadow = 'none';
-                        }}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {newsArticles.map((art, i) => (
+                  <a
+                    key={i}
+                    href={art.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex', gap: '12px',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      borderRadius: '14px',
+                      padding: '12px',
+                      textDecoration: 'none',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(168, 85, 247, 0.08)';
+                      e.currentTarget.style.borderColor = 'rgba(168, 85, 247, 0.3)';
+                      e.currentTarget.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.03)';
+                      e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                      e.currentTarget.style.transform = 'translateY(0)';
+                    }}
+                  >
+                    {art.image && (
+                      <img
+                        src={art.image}
+                        alt=""
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
                         style={{
-                          display: 'block',
-                          background: 'rgba(255,255,255,0.025)',
-                          border: '1px solid rgba(255,255,255,0.08)',
-                          borderLeft: `3px solid ${tierColor}`,
-                          borderRadius: '12px',
-                          padding: '14px 16px',
-                          textDecoration: 'none',
-                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                          cursor: 'pointer'
+                          width: '88px', height: '64px',
+                          objectFit: 'cover', borderRadius: '8px',
+                          flexShrink: 0,
+                          background: '#1e293b'
                         }}
-                      >
-                        {/* Top row: tier badge + score bar */}
-                        <div style={{
-                          display: 'flex', alignItems: 'center', gap: '10px',
-                          marginBottom: '10px'
-                        }}>
-                          <span style={{
-                            fontSize: '9px', fontWeight: 800,
-                            color: tierColor, background: tierBg,
-                            padding: '3px 7px', borderRadius: '4px',
-                            letterSpacing: '1px',
-                            fontFamily: '"SF Mono", Monaco, Consolas, monospace',
-                            border: `1px solid ${tierBg.replace('0.12', '0.25').replace('0.1', '0.2')}`
-                          }}>
-                            {tierLabel} · {score.toFixed ? score.toFixed(1) : score}
-                          </span>
+                      />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{
+                        color: '#fff', fontSize: '13px', fontWeight: 700,
+                        margin: 0, lineHeight: 1.35,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}>
+                        {art.title}
+                      </p>
+                      <p style={{
+  color: '#64748b',
+  fontSize: '10px',
+  margin: '6px 0 0 0',
+  fontWeight: 600,
+  textTransform: 'uppercase',
+  letterSpacing: '0.5px',
+  display: 'flex',
+  gap: '8px',
+  alignItems: 'center'
+}}>
+  {process.env.NODE_ENV === 'development' && (
+  <div style={{
+    marginTop: '6px',
+    fontSize: '10px',
+    color: '#facc15',
+    fontWeight: 700
+  }}>
+    Score: {art.score.toFixed(1)}
+  </div>
+)}
+  <span>{art.source}</span>
 
-                          <div style={{
-                            flex: 1, height: '3px',
-                            background: 'rgba(255,255,255,0.05)',
-                            borderRadius: '2px', overflow: 'hidden'
-                          }}>
-                            <div style={{
-                              width: `${barWidth}%`, height: '100%',
-                              background: `linear-gradient(90deg, ${tierColor}, ${tierColor}cc)`,
-                              boxShadow: `0 0 6px ${tierGlow}`,
-                              borderRadius: '2px'
-                            }} />
-                          </div>
-                        </div>
+  <span style={{ opacity: 0.5 }}>·</span>
 
-                        {/* Title */}
-                        <p style={{
-                          color: '#f1f5f9', fontSize: '14px', fontWeight: 700,
-                          margin: 0, lineHeight: 1.4,
-                          letterSpacing: '-0.2px',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                          overflow: 'hidden'
-                        }}>
-                          {art.title}
-                        </p>
-
-                        {/* Snippet (optional, if backend provides it) */}
-                        {art.contentSnippet && (
-                          <p style={{
-                            color: '#94a3b8', fontSize: '11.5px',
-                            margin: '6px 0 0 0', lineHeight: 1.5,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 1,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden'
-                          }}>
-                            {art.contentSnippet}
-                          </p>
-                        )}
-
-                        {/* Footer: source badge + timestamp */}
-                        <div style={{
-                          display: 'flex', alignItems: 'center', gap: '8px',
-                          marginTop: '10px',
-                          fontFamily: '"SF Mono", Monaco, Consolas, monospace'
-                        }}>
-                          <span style={{
-                            fontSize: '9.5px', fontWeight: 700,
-                            color: sourceColor.fg,
-                            background: sourceColor.bg,
-                            padding: '3px 8px', borderRadius: '4px',
-                            letterSpacing: '0.5px',
-                            textTransform: 'uppercase',
-                            border: `1px solid ${sourceColor.bg.replace('0.12', '0.2')}`
-                          }}>
-                            {art.source}
-                          </span>
-
-                          <span style={{
-                            fontSize: '10px', color: '#64748b',
-                            letterSpacing: '0.5px'
-                          }}>
-                            {formatNewsDate(art.pubDate)}
-                          </span>
-
-                          <span style={{
-                            marginLeft: 'auto',
-                            fontSize: '11px', color: '#475569'
-                          }}>
-                            →
-                          </span>
-                        </div>
-                      </a>
-                    );
-                  })}
-                </div>
-              </>
+  <span>{formatNewsDate(art.pubDate)}</span>
+</p>
+                    </div>
+                  </a>
+                ))}
+              </div>
             )}
-
-            {/* Inline keyframes */}
-            <style>{`
-              @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
-              }
-              @keyframes pulse {
-                0%, 100% { opacity: 1; transform: scale(1); }
-                50% { opacity: 0.5; transform: scale(1.3); }
-              }
-              @keyframes spin {
-                to { transform: rotate(360deg); }
-              }
-            `}</style>
           </div>
         </div>
       )}
