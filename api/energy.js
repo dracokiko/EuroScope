@@ -51,32 +51,37 @@ export default async function handler(req, res) {
         });
       }
   
-      // --- 2. PROCESSAR CAPACIDADE OFICIAL INSTALADA ---
-      let officialTotalCapacityMW = 0;
-      // O Fraunhofer não dá a "Produção Anual" num único request simples (requer somar 365 dias). 
-      // Em sistemas Palantir, usamos um multiplicador padrão da IEA (Capacidade * fator de carga) para estimativas rápidas, ou deixamos a "Produção" como dado estrutural da base de dados e usamos a Capacidade como âncora.
-      // Vamos somar toda a capacidade instalada que eles nos derem.
-      if (installedData && Array.isArray(installedData)) {
-        // Como o Fraunhofer pode mandar anos diferentes, procuramos os dados mais recentes
-         const latestYearData = installedData[installedData.length -1];
-         if (latestYearData && latestYearData.production_types) {
-            latestYearData.production_types.forEach(source => {
-              if (source.data > 0) {
-                officialTotalCapacityMW += source.data;
-              }
-            });
-         }
+// --- 2. PROCESSAR CAPACIDADE OFICIAL INSTALADA ---
+let officialTotalCapacityMW = 0;
+    
+// A API envia dicionários complexos com arrays de vários anos. 
+// Vamos varrer cada fonte de energia, isolar o array temporal, e extrair o ano mais recente.
+if (installedData && installedData.production_types) {
+  installedData.production_types.forEach(source => {
+    const values = source.data;
+    if (values && values.length > 0) {
+      // Procura de trás para a frente o valor do último ano registado
+      let latestMW = 0;
+      for (let i = values.length - 1; i >= 0; i--) {
+        if (values[i] !== null && values[i] !== undefined) {
+          latestMW = values[i];
+          break;
+        }
       }
-  
-      // Retorna os dados combinados
-      return res.status(200).json({
-        country: country,
-        timestamp: new Date().toISOString(),
-        live_production_mw: Object.keys(liveProduction).length > 0 ? liveProduction : null,
-        total_installed_mw: officialTotalCapacityMW > 0 ? Math.round(officialTotalCapacityMW) : null
-      });
-  
-    } catch (err) {
-      return res.status(500).json({ error: 'Erro de Servidor: ' + err.message });
+      officialTotalCapacityMW += latestMW;
     }
-  }
+  });
+}
+
+// Retorna os dados combinados perfeitos
+return res.status(200).json({
+  country: country,
+  timestamp: new Date().toISOString(),
+  live_production_mw: Object.keys(liveProduction).length > 0 ? liveProduction : null,
+  total_installed_mw: officialTotalCapacityMW > 0 ? Math.round(officialTotalCapacityMW) : null
+});
+
+} catch (err) {
+return res.status(500).json({ error: 'Erro de Servidor: ' + err.message });
+}
+}
