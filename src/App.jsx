@@ -92,7 +92,7 @@ function MapController({ paisSelecionado }) {
   return null;
 }
 
-// Dicionários de cores e ícones
+// Color and icon dictionaries
 const ENERGY_CONFIG = {
   "Hydro":         { color: "#3b82f6", icon: "💧" },
   "Nuclear":       { color: "#a855f7", icon: "☢️" },
@@ -117,14 +117,14 @@ const INDUSTRY_CONFIG = {
   "Food Tech":  { color: "#f59e0b", icon: "🌾" }
 };
 
-// Conversor de Código de País para Emoji de Bandeira
+// Country code to flag emoji converter
 const getFlagEmoji = (countryCode) => {
   if (!countryCode) return "";
   const codePoints = countryCode.toUpperCase().split('').map(char => 127397 + char.charCodeAt(0));
   return String.fromCodePoint(...codePoints);
 };
 
-// Gerador de Ícones com Emojis (Map Pins)
+// Emoji map pin generator
 const criarIconePersonalizado = (icone, cor, tamanho) => {
   return L.divIcon({
     className: 'custom-emoji-marker',
@@ -159,7 +159,7 @@ export default function App() {
   const [energyIntel, setEnergyIntel] = useState(null);
   const [loadingEnergyIntel, setLoadingEnergyIntel] = useState(false);
 
-  // Filtros ativos para Energia (Ports e Industry não usam filtros)
+  // Active filters for Energy (Ports and Industry don't use filters)
   const [filtrosEnergia, setFiltrosEnergia] = useState([]);
 
   const alternarFiltroEnergia = (tipo) => {
@@ -200,7 +200,7 @@ export default function App() {
     loadAll();
   }, []);
 
-// Busca os dados MACRO (Capacidade Oficial + Ao Vivo)
+// Fetches MACRO data (Official Capacity + Live)
 useEffect(() => {
   if (!paisSelecionado || moduloAtivo !== 'energy') {
     setEnergyIntel(null);
@@ -221,7 +221,7 @@ useEffect(() => {
       }
     })
     .catch(err => {
-      console.error("Falha ao intercetar energia:", err);
+      console.error("Energy intel fetch failed:", err);
       setEnergyIntel(null);
     })
     .finally(() => setLoadingEnergyIntel(false));
@@ -324,7 +324,7 @@ const abrirNews = async () => {
       setNewsArticles([]);
     }
   } catch (err) {
-    console.error("Erro:", err);
+    console.error("Error:", err);
     setNewsError("Couldn't load news.");
     setNewsArticles([]);
   } finally {
@@ -342,7 +342,7 @@ const abrirNews = async () => {
     return BRANDS_PAISES[paisSelecionado] || [];
   }, [paisSelecionado]);
 
-  // Filtrar e preparar centrais elétricas para renderização
+  // Filter and prepare power plants for rendering
   const centraisRenderizadas = useMemo(() => {
     if (moduloAtivo !== 'energy') return [];
     let filtradas = POWER_PLANTS;
@@ -356,7 +356,7 @@ const abrirNews = async () => {
   }, [moduloAtivo, filtrosEnergia, paisSelecionado]);
 
 
-  // PORTOS — sem filtros, apenas restrição por país
+  // PORTS — no filters, only country restriction
   const portosRenderizados = useMemo(() => {
     if (moduloAtivo !== 'ports') return [];
     let filtrados = PORTS_DATA;
@@ -366,7 +366,7 @@ const abrirNews = async () => {
     return filtrados;
   }, [moduloAtivo, paisSelecionado]);
 
-  // INDÚSTRIA — sem filtros, apenas restrição por país
+  // INDUSTRY — no filters, only country restriction
   const industriasRenderizadas = useMemo(() => {
     if (moduloAtivo !== 'industry') return [];
     let filtradas = INDUSTRY_DATA;
@@ -445,7 +445,7 @@ const abrirNews = async () => {
                     <div style={{ fontWeight: '600', fontSize: '13px', color: moduloAtivo === item.id ? '#10b981' : '#cbd5e1' }}>{item.label}</div>
                   </div>
 
-                  {/* SUBFILTROS DE ENERGIA (único módulo com filtros) */}
+                  {/* ENERGY SUBFILTERS (only module with filters) */}
                   {moduloAtivo === 'energy' && item.id === 'energy' && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', paddingLeft: '14px', marginTop: '4px', animation: 'fadeIn 0.3s ease' }}>
                       {Object.keys(ENERGY_CONFIG).map(tipo => {
@@ -486,25 +486,30 @@ const abrirNews = async () => {
                 {info}
               </div>
 
-             {/* PAINEL DE ESTATÍSTICAS DE ENERGIA DO PAÍS (100% API DATA) */}
+             {/* COUNTRY ENERGY STATS PANEL (100% API DATA) */}
              {moduloAtivo === 'energy' && paisSelecionado && (
                 <div style={{ marginTop: '12px', padding: '16px', background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8))', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.2)', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', animation: 'fadeIn 0.4s ease' }}>
-                  <h3 style={{ fontSize: '11px', color: '#10b981', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>⚡ Energy Overview Detectado</h3>
+                  <h3 style={{ fontSize: '11px', color: '#10b981', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>⚡ Energy Overview</h3>
                   
                   {loadingEnergyIntel ? (
-                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">A calcular agregados nacionais...</span>
+                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">Calculating national totals...</span>
                   ) : energyIntel && energyIntel.capacity ? (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ color: '#94a3b8', fontSize: '12px' }}>Capacidade Nacional Total:</span>
-                      <strong style={{ color: '#fff', fontSize: '13px' }}>{(energyIntel.capacity / 1000).toFixed(1)} GW</strong>
+                    <div style={{ marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>Total Installed Capacity:</span>
+                        <strong style={{ color: '#fff', fontSize: '13px' }}>{(energyIntel.capacity / 1000).toFixed(1)} GW</strong>
+                      </div>
+                      <p style={{ color: '#64748b', fontSize: '10px', margin: '4px 0 0 0', fontStyle: 'italic', lineHeight: '1.3' }}>
+                        Max power all plants could deliver if running at 100% — the country's theoretical ceiling.
+                      </p>
                     </div>
                   ) : (
                     <div style={{ fontSize: '11px', color: '#475569', marginBottom: '12px', fontStyle: 'italic' }}>
-                      Dados estruturais do país indisponíveis.
+                      Structural country data unavailable.
                     </div>
                   )}
 
-                  {/* BLOCO AO VIVO */}
+                  {/* LIVE BLOCK */}
                   <div style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)', paddingTop: '12px', marginTop: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                       <span className="animate-pulse" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }}></span>
@@ -512,7 +517,7 @@ const abrirNews = async () => {
                     </div>
 
                     {loadingEnergyIntel ? (
-                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">A intercetar sensores...</span>
+                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">Polling sensors...</span>
                     ) : energyIntel && energyIntel.live ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         
@@ -535,13 +540,13 @@ const abrirNews = async () => {
                         ))}
                       </div>
                     ) : (
-                      <span style={{ color: '#475569', fontSize: '11px' }}>Sem sinal em tempo real (FIPS isolado).</span>
+                      <span style={{ color: '#475569', fontSize: '11px' }}>No real-time signal available.</span>
                     )}
                   </div>
                 </div>
               )}
 
-              {/* PAINEL DE ESTATÍSTICAS DOS PORTOS */}
+              {/* PORTS STATS PANEL */}
               {moduloAtivo === 'ports' && statsPortos && (
                 <div style={{ marginTop: '12px', padding: '16px', background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8))', borderRadius: '16px', border: '1px solid rgba(249, 115, 22, 0.2)', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', animation: 'fadeIn 0.4s ease' }}>
                   <h3 style={{ fontSize: '11px', color: '#f97316', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>⚓ Maritime Intel</h3>
@@ -556,7 +561,7 @@ const abrirNews = async () => {
                 </div>
               )}
 
-              {/* PAINEL DE ESTATÍSTICAS DA INDÚSTRIA */}
+              {/* INDUSTRY STATS PANEL */}
               {moduloAtivo === 'industry' && statsIndustria && (
                 <div style={{ marginTop: '12px', padding: '16px', background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8))', borderRadius: '16px', border: '1px solid rgba(14, 165, 233, 0.2)', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', animation: 'fadeIn 0.4s ease' }}>
                   <h3 style={{ fontSize: '11px', color: '#0ea5e9', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>🏭 Strategic Monopolies</h3>
@@ -679,7 +684,7 @@ const abrirNews = async () => {
             />
           )}
 
-          {/* CAMADA DE CENTRAIS ELÉTRICAS */}
+          {/* POWER PLANTS LAYER */}
           {centraisRenderizadas.map((plant) => {
             const conf = ENERGY_CONFIG[plant.type];
             const tamanhoCalculado = Math.max(24, Math.min(34, 18 + Math.sqrt(plant.capacityMW) / 4));
@@ -729,7 +734,7 @@ const abrirNews = async () => {
             );
           })}
 
-          {/* CAMADA DE PORTOS */}
+          {/* PORTS LAYER */}
           {portosRenderizados.map((port) => {
             const conf = PORTS_CONFIG[port.type];
             const tamanhoCalculado = Math.max(24, Math.min(34, 18 + Math.sqrt(port.cargoMillionTons)));
@@ -779,7 +784,7 @@ const abrirNews = async () => {
             );
           })}
 
-          {/* CAMADA DE INDÚSTRIA */}
+          {/* INDUSTRY LAYER */}
           {industriasRenderizadas.map((ind) => {
             const conf = INDUSTRY_CONFIG[ind.type];
             const tamanhoCalculado = Math.max(26, Math.min(36, 15 + (ind.globalMarketShare / 4)));
@@ -1072,7 +1077,7 @@ const abrirNews = async () => {
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       
-                      {/* 1. TÍTULO LIMPO */}
+                      {/* 1. CLEAN TITLE */}
                       <p style={{
                         color: '#fff', fontSize: '13px', fontWeight: 700,
                         margin: 0, lineHeight: 1.35,
@@ -1086,7 +1091,7 @@ const abrirNews = async () => {
                           : art.title}
                       </p>
                       
-                      {/* 2. NOME DO JORNAL EXTRAÍDO DIRETAMENTE DO TÍTULO */}
+                      {/* 2. NEWSPAPER NAME EXTRACTED FROM TITLE */}
                       <p style={{
                         margin: '4px 0 0 0',
                         fontSize: '11px',
@@ -1098,10 +1103,10 @@ const abrirNews = async () => {
                       }}>
                         📰 {art.title.includes(' - ') 
                               ? art.title.substring(art.title.lastIndexOf(' - ') + 3).trim() 
-                              : (art.source || 'Fonte Externa')}
+                              : (art.source || 'External Source')}
                       </p>
 
-                      {/* 3. DATA E SCORE */}
+                      {/* 3. DATE AND SCORE */}
                       <div style={{
                         color: '#64748b',
                         fontSize: '10px',
