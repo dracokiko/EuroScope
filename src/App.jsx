@@ -161,6 +161,9 @@ export default function App() {
   const [moduloAtivo, setModuloAtivo] = useState(null);
   const [energyIntel, setEnergyIntel] = useState(null);
   const [loadingEnergyIntel, setLoadingEnergyIntel] = useState(false);
+  // Cache global de energia: { PT: {...}, DE: {...}, ... } — carregado UMA vez no arranque.
+  // Clicar num país = leitura instantânea deste objecto, sem fetch nem race conditions.
+  const [energyCacheAll, setEnergyCacheAll] = useState(null);
   // Controla qual o termo de ajuda está aberto no modal (null = fechado)
   const [termoAjuda, setTermoAjuda] = useState(null);
   // Active filters for Energy (Ports and Industry don't use filters)
@@ -202,46 +205,63 @@ export default function App() {
     };
     loadAll();
   }, []);
-// Busca os dados MACRO (Capacidade Oficial + Ao Vivo + Horário)
-// CORRIGIDO: protecção contra race conditions ao alternar entre países rapidamente
+// ─────────────────────────────────────────────────────────────
+// CARREGAMENTO ÚNICO do cache de energia
+// Acontece UMA VEZ no arranque da app. Os dados ficam em memória.
+// O backend (/api/energy-all) lê de um blob estático actualizado 1x/dia por cron.
+// → sem rate limits, sem race conditions, sem fetch por clique.
+// ─────────────────────────────────────────────────────────────
 useEffect(() => {
-  if (!paisSelecionado || moduloAtivo !== 'energy') {
-    setEnergyIntel(null);
-    return;
-  }
-  // Flag que permite cancelar a resposta se o utilizador trocar de país antes do fetch terminar
   let cancelado = false;
-  setLoadingEnergyIntel(true);
-  // IMPORTANTE: limpar dados anteriores para mostrar o spinner enquanto carrega o novo país
-  setEnergyIntel(null);
-  fetch(`/api/energy?country=${paisSelecionado}`)
+  fetch('/api/energy-all')
     .then(res => res.json())
     .then(data => {
-      // Se o utilizador já trocou de país, ignorar esta resposta
       if (cancelado) return;
-      if (data && (data.live_production_mw || data.total_installed_mw)) {
-         setEnergyIntel({
-           live: data.live_production_mw,
-           capacity: data.total_installed_mw,
-           timestamp: data.timestamp
-         });
+      if (data && data.countries) {
+        setEnergyCacheAll(data.countries);
       } else {
-        setEnergyIntel(null);
+        console.warn('[energy] cache vazio:', data);
+        setEnergyCacheAll({});
       }
     })
     .catch(err => {
-      if (cancelado) return;
-      console.error("Falha ao intercetar energia:", err);
-      setEnergyIntel(null);
-    })
-    .finally(() => {
-      if (!cancelado) setLoadingEnergyIntel(false);
+      console.error('[energy] falha ao carregar cache:', err);
+      setEnergyCacheAll({}); // falha = objecto vazio (UI mostra "unavailable" mas não quebra)
     });
-  // Cleanup: marca esta chamada como cancelada se o useEffect re-correr
-  return () => {
-    cancelado = true;
-  };
-}, [paisSelecionado, moduloAtivo]);
+  return () => { cancelado = true; };
+}, []);
+
+// ─────────────────────────────────────────────────────────────
+// Selecciona os dados do país actual a partir do cache em memória.
+// Síncrono, instantâneo, idempotente: clicar A→B→A devolve sempre o mesmo objecto para A.
+// ─────────────────────────────────────────────────────────────
+useEffect(() => {
+  if (!paisSelecionado || moduloAtivo !== 'energy') {
+    setEnergyIntel(null);
+    setLoadingEnergyIntel(false);
+    return;
+  }
+
+  // Cache ainda a carregar → spinner
+  if (energyCacheAll === null) {
+    setLoadingEnergyIntel(true);
+    setEnergyIntel(null);
+    return;
+  }
+
+  // Cache pronto → leitura directa
+  setLoadingEnergyIntel(false);
+  const entry = energyCacheAll[paisSelecionado];
+  if (entry && (entry.live_production_mw || entry.total_installed_mw)) {
+    setEnergyIntel({
+      live: entry.live_production_mw,
+      capacity: entry.total_installed_mw,
+      timestamp: entry.timestamp
+    });
+  } else {
+    setEnergyIntel(null);
+  }
+}, [paisSelecionado, moduloAtivo, energyCacheAll]);
 
   // 2. Click COUNTRY
   const clicarNoPais = async (e) => {
