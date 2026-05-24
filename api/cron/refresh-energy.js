@@ -151,7 +151,7 @@ export default async function handler(req, res) {
   // Guardar no Vercel Blob (público, com cache CDN)
   try {
     const blob = await put('energy-cache.json', JSON.stringify(payload), {
-      access: 'public',
+      access: 'private',
       contentType: 'application/json',
       addRandomSuffix: false,        // queremos sempre o mesmo URL
       allowOverwrite: true,

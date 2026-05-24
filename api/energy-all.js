@@ -1,12 +1,12 @@
 // /api/energy-all.js
-import { get } from '@vercel/blob';
+import { list } from '@vercel/blob';
 
 let memoryCache = null;
 let memoryCacheTime = 0;
-const MEMORY_TTL_MS = 5 * 60 * 1000; 
+const MEMORY_TTL_MS = 5 * 60 * 1000; // 5 min
 
 export default async function handler(req, res) {
-  // 1. Cache em memória
+  // Cache em memória (serverless function quente)
   if (memoryCache && (Date.now() - memoryCacheTime) < MEMORY_TTL_MS) {
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
     res.setHeader('X-Cache', 'memory-hit');
@@ -14,18 +14,25 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 2. Buscar diretamente com o SDK (autenticado automaticamente)
-    const blob = await get('energy-cache.json');
+    // List devolve URLs pré-assinados, funcionam mesmo com store privado
+    const { blobs } = await list({ prefix: 'energy-cache.json', limit: 1 });
     
-    if (!blob) {
+    if (blobs.length === 0) {
       return res.status(503).json({
-        error: 'Cache not found. Run /api/cron/refresh-energy first.',
+        error: 'Cache not ready. Run /api/cron/refresh-energy first.',
         generated_at: null,
         countries: {}
       });
     }
 
-    const data = await blob.json();
+    const blobUrl = blobs[0].url;
+    const blobRes = await fetch(blobUrl);
+    
+    if (!blobRes.ok) {
+      throw new Error(`Blob fetch failed: ${blobRes.status}`);
+    }
+    
+    const data = await blobRes.json();
 
     memoryCache = data;
     memoryCacheTime = Date.now();
