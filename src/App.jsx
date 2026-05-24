@@ -146,6 +146,26 @@ const criarIconePersonalizado = (icone, cor, tamanho) => {
   });
 };
 
+// Tradutor de Tempo Tático
+const formatExactIntelTime = (isoString) => {
+  if (!isoString) return "OFFLINE";
+  const date = new Date(isoString);
+  const now = new Date();
+  
+  const isToday = date.toDateString() === now.toDateString();
+  const yesterday = new Date();
+  yesterday.setDate(now.getDate() - 1);
+  const isYesterday = date.toDateString() === yesterday.toDateString();
+  
+  const timeStr = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const dateStr = date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
+  
+  if (isToday) return `TODAY, ${timeStr}`;
+  if (isYesterday) return `YESTERDAY, ${timeStr}`;
+  return `${dateStr.toUpperCase()} - ${timeStr}`;
+};
+
+
 export default function App() {
   const [dadosBase, setDadosBase] = useState(null);
   const [dadosPaises, setDadosPaises] = useState(null);
@@ -510,11 +530,18 @@ const abrirNews = async () => {
                     </div>
                   )}
 
-                  {/* LIVE GRID BLOCK */}
+                  {/* LIVE GRID BLOCK (AGORA COM TEMPO EXATO) */}
                   <div style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)', paddingTop: '12px', marginTop: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                       <span className="animate-pulse" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }}></span>
                       <span style={{ color: '#10b981', fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Live Grid Intel</span>
+                      
+                      {/* ETIQUETA DA HORA EXATA DO SENSOR */}
+                      {energyIntel?.timestamp && (
+                        <span style={{ marginLeft: 'auto', fontSize: '9px', color: '#94a3b8', fontWeight: 800, background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.5px' }}>
+                          {formatExactIntelTime(energyIntel.timestamp)}
+                        </span>
+                      )}
                     </div>
 
                     {loadingEnergyIntel ? (
@@ -859,78 +886,57 @@ const abrirNews = async () => {
 
 
       
-      {/* INFRASTRUCTURE INTEL INFO MODAL */}
+      {/* FLOATING GLOSSARY POPUP (NON-BLOCKING) */}
       {termoAjuda && (
         <div
-          onClick={() => setTermoAjuda(null)}
           style={{
-            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-            background: 'rgba(5, 8, 16, 0.85)', backdropFilter: 'blur(8px)',
-            zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            animation: 'fadeIn 0.15s ease'
+            position: 'fixed', bottom: '40px', left: '310px', width: '320px',
+            background: 'rgba(15, 23, 42, 0.95)', backdropFilter: 'blur(12px)',
+            border: '1px solid rgba(16, 185, 129, 0.3)', borderRadius: '16px',
+            padding: '24px', boxShadow: '0 20px 40px rgba(0,0,0,0.6), 0 0 20px rgba(16, 185, 129, 0.1)',
+            zIndex: 3000, animation: 'fadeIn 0.2s ease', pointerEvents: 'auto'
           }}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
+          <button
+            onClick={() => setTermoAjuda(null)}
             style={{
-              background: '#090d16', border: '1px solid #10b98140', borderRadius: '16px',
-              padding: '24px', maxWidth: '400px', width: '85%',
-              boxShadow: '0 20px 50px rgba(0,0,0,0.8), 0 0 15px rgba(16, 185, 129, 0.1)', position: 'relative'
+              position: 'absolute', top: '14px', right: '14px', width: '26px', height: '26px',
+              background: '#151b26', border: '1px solid #273549', borderRadius: '6px',
+              color: '#64748b', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center'
             }}
           >
-            <button
-              onClick={() => setTermoAjuda(null)}
-              style={{
-                position: 'absolute', top: '14px', right: '14px', width: '26px', height: '26px',
-                background: '#151b26', border: '1px solid #273549', borderRadius: '6px',
-                color: '#64748b', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center'
-              }}
-            >
-              ✕
-            </button>
+            ✕
+          </button>
 
-            <p style={{ fontSize: '10px', color: '#10b981', fontWeight: '700', letterSpacing: '1px', margin: 0, textTransform: 'uppercase' }}>
-              Strategic Glossary
-            </p>
-            <h4 style={{ color: '#fff', fontSize: '16px', fontWeight: '800', margin: '4px 0 12px 0' }}>
-              {termoAjuda}
-            </h4>
+          <p style={{ fontSize: '10px', color: '#10b981', fontWeight: '700', letterSpacing: '1px', margin: 0, textTransform: 'uppercase' }}>
+            Strategic Glossary
+          </p>
+          <h4 style={{ color: '#fff', fontSize: '16px', fontWeight: '800', margin: '4px 0 12px 0' }}>
+            {termoAjuda}
+          </h4>
 
-            {/* English Dictionary */}
-            <p style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5', margin: '0 0 16px 0' }}>
+          {/* English Dictionary */}
+          <p style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5', margin: 0 }}>
+            {
               {
-                {
-                  'Total Capacity': 'The total combined power capacity of all registered and active power plants in the country. Represents the absolute maximum production ceiling the national infrastructure can output.',
-                  'Renewable Share': 'The precise percentage of clean energy (wind, solar, hydro, biomass) supplying the nation\'s grid and industries relative to total power generation at the recorded time.',
-                  'Nuclear': 'Continuous baseline energy generated by atomic fission. Considered a structural base load power source as its output remains constant regardless of weather conditions.',
-                  'Hydro Run-of-River': 'Run-of-river hydroelectricity. Generates power directly from the natural flow and current of the river, without the capability to store water in a reservoir.',
-                  'Hydro water reservoir': 'Traditional hydroelectric dams with retaining reservoirs. Allows operators to store water and release it to generate power specifically during peak demand or high financial value hours.',
-                  'Hydro pumped storage': 'Pumped-storage hydroelectricity (Water Battery). Consumes cheap grid energy (typically at night) to pump water uphill, releasing it to generate power during critical peak consumption hours.',
-                  'Wind onshore': 'Wind energy generated by aerogenerators and turbines located on land (plains, coastal shores, or mountains).',
-                  'Wind offshore': 'Wind energy generated by turbines installed in the open sea, taking advantage of significantly more powerful, consistent, and uninterrupted maritime winds.',
-                  'Solar': 'Photovoltaic energy captured directly through solar panel infrastructure and solar farms.',
-                  'Biomass': 'Energy generated from the controlled combustion of organic biological waste (wood, forestry, or agricultural biomass).',
-                  'Fossil gas': 'Thermal power plants fueled by natural gas. Highly flexible assets that can be quickly ramped up to cover sudden drops in renewable energy production.',
-                  'Thermal': 'Conventional thermal power plants burning heavy fossil fuels (coal, lignite, or fuel oil). This source carries the highest carbon footprint in the energy system.'
-                }[termoAjuda] || 'Definition and operational context pending indexing by central command.'
-              }
-            </p>
-
-            {/* TIMELINE REF */}
-            <div style={{ background: '#0e1420', border: '1px solid #162235', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <span style={{ fontSize: '9px', color: '#64748b', fontWeight: '750', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📍 Sensor Timeline</span>
-              <span style={{ fontSize: '11px', color: '#e2e8f0', fontWeight: '600' }}>
-                {energyIntel?.timestamp ? (
-                  <>Ref: {new Date(energyIntel.timestamp).toLocaleDateString('en-GB')} at {new Date(energyIntel.timestamp).toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'})} (Local Time)</>
-                ) : (
-                  <>Recent Aggregated History</>
-                )}
-              </span>
-            </div>
-          </div>
+                'Total Capacity': 'The total combined power capacity of all registered and active power plants in the country. Represents the absolute maximum production ceiling the national infrastructure can output.',
+                'Renewable Share': 'The precise percentage of clean energy (wind, solar, hydro, biomass) supplying the nation\'s grid and industries relative to total power generation at the recorded time.',
+                'Nuclear': 'Continuous baseline energy generated by atomic fission. Considered a structural base load power source as its output remains constant regardless of weather conditions.',
+                'Hydro Run-of-River': 'Run-of-river hydroelectricity. Generates power directly from the natural flow and current of the river, without the capability to store water in a reservoir.',
+                'Hydro water reservoir': 'Traditional hydroelectric dams with retaining reservoirs. Allows operators to store water and release it to generate power specifically during peak demand or high financial value hours.',
+                'Hydro pumped storage': 'Pumped-storage hydroelectricity (Water Battery). Consumes cheap grid energy (typically at night) to pump water uphill, releasing it to generate power during critical peak consumption hours.',
+                'Wind onshore': 'Wind energy generated by aerogenerators and turbines located on land (plains, coastal shores, or mountains).',
+                'Wind offshore': 'Wind energy generated by turbines installed in the open sea, taking advantage of significantly more powerful, consistent, and uninterrupted maritime winds.',
+                'Solar': 'Photovoltaic energy captured directly through solar panel infrastructure and solar farms.',
+                'Biomass': 'Energy generated from the controlled combustion of organic biological waste (wood, forestry, or agricultural biomass).',
+                'Fossil gas': 'Thermal power plants fueled by natural gas. Highly flexible assets that can be quickly ramped up to cover sudden drops in renewable energy production.',
+                'Thermal': 'Conventional thermal power plants burning heavy fossil fuels (coal, lignite, or fuel oil). This source carries the highest carbon footprint in the energy system.'
+              }[termoAjuda] || 'Definition and operational context pending indexing by central command.'
+            }
+          </p>
         </div>
       )}
-
+           
       {/* BRANDS MODAL */}
       {brandsAberto && (
         <div
