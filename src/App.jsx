@@ -489,28 +489,28 @@ const abrirNews = async () => {
                 {info}
               </div>
 
-             {/* PAINEL DE ESTATÍSTICAS DE ENERGIA DO PAÍS (100% API DATA) */}
+             {/* ENERGY STATS PANEL (100% API DATA) */}
              {moduloAtivo === 'energy' && paisSelecionado && (
                 <div style={{ marginTop: '12px', padding: '16px', background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8))', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.2)', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', animation: 'fadeIn 0.4s ease' }}>
-                  <h3 style={{ fontSize: '11px', color: '#10b981', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>⚡ Energy Overview Detectado</h3>
+                  <h3 style={{ fontSize: '11px', color: '#10b981', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>⚡ Strategic Energy Overview</h3>
                   
                   {loadingEnergyIntel ? (
-                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">A calcular agregados nacionais...</span>
+                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">Calculating national aggregates...</span>
                   ) : energyIntel && energyIntel.capacity ? (
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>Capacidade Total:</span>
-                        <button onClick={() => setTermoAjuda('Capacidade Total')} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '11px', padding: 0 }}>ℹ️</button>
+                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>Total National Capacity:</span>
+                        <button onClick={() => setTermoAjuda('Total Capacity')} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '11px', padding: 0 }}>ℹ️</button>
                       </div>
                       <strong style={{ color: '#fff', fontSize: '13px' }}>{(energyIntel.capacity / 1000).toFixed(1)} GW</strong>
                     </div>
                   ) : (
                     <div style={{ fontSize: '11px', color: '#475569', marginBottom: '12px', fontStyle: 'italic' }}>
-                      Dados estruturais do país indisponíveis.
+                      Structural data for this territory is unavailable.
                     </div>
                   )}
 
-                  {/* BLOCO AO VIVO */}
+                  {/* LIVE GRID BLOCK */}
                   <div style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)', paddingTop: '12px', marginTop: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                       <span className="animate-pulse" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }}></span>
@@ -518,7 +518,7 @@ const abrirNews = async () => {
                     </div>
 
                     {loadingEnergyIntel ? (
-                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">A intercetar sensores...</span>
+                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">Intercepting national sensors...</span>
                     ) : energyIntel && energyIntel.live ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         
@@ -547,11 +547,11 @@ const abrirNews = async () => {
                         ))}
                       </div>
                     ) : (
-                      <span style={{ color: '#475569', fontSize: '11px' }}>Sem sinal em tempo real (FIPS isolado).</span>
+                      <span style={{ color: '#475569', fontSize: '11px' }}>No real-time signal (FIPS isolated).</span>
                     )}
                   </div>
 
-                  {/* LINK DA FONTE DE DADOS */}
+                  {/* DATA SOURCE LINK */}
                   <div style={{ marginTop: '14px', paddingTop: '8px', borderTop: '1px dashed rgba(255,255,255,0.05)', textAlign: 'right' }}>
                     <a 
                       href="https://energy-charts.info" 
@@ -857,7 +857,7 @@ const abrirNews = async () => {
         </MapContainer>
       </div>
 
-      
+
       
       {/* INFRASTRUCTURE INTEL INFO MODAL */}
       {termoAjuda && (
@@ -890,40 +890,40 @@ const abrirNews = async () => {
             </button>
 
             <p style={{ fontSize: '10px', color: '#10b981', fontWeight: '700', letterSpacing: '1px', margin: 0, textTransform: 'uppercase' }}>
-              Glossário Estratégico
+              Strategic Glossary
             </p>
             <h4 style={{ color: '#fff', fontSize: '16px', fontWeight: '800', margin: '4px 0 12px 0' }}>
               {termoAjuda}
             </h4>
 
-            {/* Dicionário de Definições Técnicas */}
+            {/* English Dictionary */}
             <p style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5', margin: '0 0 16px 0' }}>
               {
                 {
-                  'Capacidade Total': 'A soma total da potência de todas as centrais elétricas registadas e ativas no país. Representa o teto máximo de produção que a infraestrutura nacional aguenta debitar.',
-                  'Renewable Share': 'A percentagem exata de energia limpa (eólica, solar, hídrica, biomassa) que está a abastecer as tomadas e indústrias da nação em relação ao consumo total na hora registada.',
-                  'Nuclear': 'Energia contínua gerada por fissão atómica. É considerada energia de base estrutural por não depender de fatores meteorológicos (vento ou sol).',
-                  'Hydro Run-of-River': 'Central hídrica a "fio de água". Produz eletricidade diretamente com o fluxo e corrente natural do rio corrente, sem capacidade de armazenar água numa albufeira.',
-                  'Hydro water reservoir': 'Barragens hídricas com albufeiras de retenção tradicionais. Permitem guardar água para libertar e produzir energia apenas nas horas de maior aperto ou valor financeiro.',
-                  'Hydro pumped storage': 'Barragem de bombagem (Bateria Hidráulica). Consome energia barata da rede (à noite) para bombear água para cima, e liberta essa água para gerar energia nas horas de pico de consumo.',
-                  'Wind onshore': 'Energia eólica gerada por aerogeradores montados em terra firme (planícies ou montanhas).',
-                  'Wind offshore': 'Energia eólica gerada por turbinas instaladas em alto mar, aproveitando ventos marítimos significativamente mais potentes e constantes.',
-                  'Solar': 'Energia fotovoltaica captada diretamente através de painéis solares.',
-                  'Biomass': 'Energia gerada a partir da queima controlada de resíduos biológicos orgânicos (madeiras, biomassa florestal ou agropecuária).',
-                  'Fossil gas': 'Centrais térmicas alimentadas a gás natural. Altamente flexíveis, são ligadas com rapidez para cobrir falhas repentinas das energias renováveis.',
-                  'Thermal': 'Central térmica convencional que queima combustíveis pesados (carvão ou fuelóleo). É a fonte com maior pegada de carbono do sistema.'
-                }[termoAjuda] || 'Definição e enquadramento operacional pendente de indexação pelo comando central.'
+                  'Total Capacity': 'The total combined power capacity of all registered and active power plants in the country. Represents the absolute maximum production ceiling the national infrastructure can output.',
+                  'Renewable Share': 'The precise percentage of clean energy (wind, solar, hydro, biomass) supplying the nation\'s grid and industries relative to total power generation at the recorded time.',
+                  'Nuclear': 'Continuous baseline energy generated by atomic fission. Considered a structural base load power source as its output remains constant regardless of weather conditions.',
+                  'Hydro Run-of-River': 'Run-of-river hydroelectricity. Generates power directly from the natural flow and current of the river, without the capability to store water in a reservoir.',
+                  'Hydro water reservoir': 'Traditional hydroelectric dams with retaining reservoirs. Allows operators to store water and release it to generate power specifically during peak demand or high financial value hours.',
+                  'Hydro pumped storage': 'Pumped-storage hydroelectricity (Water Battery). Consumes cheap grid energy (typically at night) to pump water uphill, releasing it to generate power during critical peak consumption hours.',
+                  'Wind onshore': 'Wind energy generated by aerogenerators and turbines located on land (plains, coastal shores, or mountains).',
+                  'Wind offshore': 'Wind energy generated by turbines installed in the open sea, taking advantage of significantly more powerful, consistent, and uninterrupted maritime winds.',
+                  'Solar': 'Photovoltaic energy captured directly through solar panel infrastructure and solar farms.',
+                  'Biomass': 'Energy generated from the controlled combustion of organic biological waste (wood, forestry, or agricultural biomass).',
+                  'Fossil gas': 'Thermal power plants fueled by natural gas. Highly flexible assets that can be quickly ramped up to cover sudden drops in renewable energy production.',
+                  'Thermal': 'Conventional thermal power plants burning heavy fossil fuels (coal, lignite, or fuel oil). This source carries the highest carbon footprint in the energy system.'
+                }[termoAjuda] || 'Definition and operational context pending indexing by central command.'
               }
             </p>
 
-            {/* REFERÊNCIA TEMPORAL REAL */}
+            {/* TIMELINE REF */}
             <div style={{ background: '#0e1420', border: '1px solid #162235', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
-              <span style={{ fontSize: '9px', color: '#64748b', fontWeight: '750', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📍 Linha Temporal do Sensor</span>
+              <span style={{ fontSize: '9px', color: '#64748b', fontWeight: '750', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📍 Sensor Timeline</span>
               <span style={{ fontSize: '11px', color: '#e2e8f0', fontWeight: '600' }}>
                 {energyIntel?.timestamp ? (
-                  <>Ref: {new Date(energyIntel.timestamp).toLocaleDateString('pt-PT')} às {new Date(energyIntel.timestamp).toLocaleTimeString('pt-PT', {hour: '2-digit', minute:'2-digit'})} (Hora Local)</>
+                  <>Ref: {new Date(energyIntel.timestamp).toLocaleDateString('en-GB')} at {new Date(energyIntel.timestamp).toLocaleTimeString('en-GB', {hour: '2-digit', minute:'2-digit'})} (Local Time)</>
                 ) : (
-                  <>Histórico Agregado Recente</>
+                  <>Recent Aggregated History</>
                 )}
               </span>
             </div>
