@@ -54,24 +54,27 @@ export default async function handler(req, res) {
       }
   
       // ---- INSTALLED CAPACITY (installed_power) ----
-      // A resposta é um OBJETO: { time: [...anos], production_types: [{ name, data: [n_por_ano] }, ...] }
-      // NÃO é um array. E source.data é um ARRAY, não um número.
+      // IMPORTANTE: A API retorna valores em GW, não MW!
+      // Precisamos converter para MW multiplicando por 1000
       let officialTotalCapacityMW = 0;
       if (installedRes.ok) {
         const installedData = await installedRes.json();
+        
         if (installedData?.production_types?.length) {
           installedData.production_types.forEach(source => {
             const arr = Array.isArray(source.data) ? source.data : [];
             // último valor não-nulo da série temporal
-            let latestValue = null;
+            let latestValueGW = null;
             for (let i = arr.length - 1; i >= 0; i--) {
               if (arr[i] !== null && arr[i] !== undefined) {
-                latestValue = arr[i];
+                latestValueGW = arr[i];
                 break;
               }
             }
-            if (typeof latestValue === 'number' && latestValue > 0) {
-              officialTotalCapacityMW += latestValue;
+            if (typeof latestValueGW === 'number' && latestValueGW > 0) {
+              // Converter de GW para MW
+              const latestValueMW = latestValueGW * 1000;
+              officialTotalCapacityMW += latestValueMW;
             }
           });
         }
@@ -93,3 +96,4 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: err.message });
     }
   }
+  
