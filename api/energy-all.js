@@ -1,5 +1,4 @@
 // /api/energy-all.js
-// CORRIGIDO: get() com opções obrigatórias na API nova
 
 import { get } from '@vercel/blob';
 
@@ -21,9 +20,9 @@ export default async function handler(req, res) {
   try {
     console.log('[energy-all] Downloading blob with get()');
     
-    // get() agora exige segundo parâmetro de opções
+    // Especificar access: 'private' porque o store é privado
     const blob = await get('energy-cache.json', {
-      // Não precisa de token porque usa as env vars automáticas
+      access: 'private'
     });
     
     if (!blob) {
