@@ -1,7 +1,7 @@
 // /api/energy-all.js
-// CORRIGIDO: usa get() do SDK que lida com autenticação automaticamente
+// CORRIGIDO: get() com opções obrigatórias na API nova
 
-import { head, get } from '@vercel/blob';
+import { get } from '@vercel/blob';
 
 let memoryCache = null;
 let memoryCacheTime = 0;
@@ -19,12 +19,14 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('[energy-all] Checking if blob exists');
+    console.log('[energy-all] Downloading blob with get()');
     
-    // Verificar se o blob existe (head = metadata sem baixar o conteúdo)
-    const blobInfo = await head('energy-cache.json');
+    // get() agora exige segundo parâmetro de opções
+    const blob = await get('energy-cache.json', {
+      // Não precisa de token porque usa as env vars automáticas
+    });
     
-    if (!blobInfo) {
+    if (!blob) {
       console.warn('[energy-all] Blob not found');
       return res.status(503).json({
         error: 'Cache not ready. Run /api/cron/refresh-energy first.',
@@ -33,16 +35,7 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log('[energy-all] Blob exists, downloading content');
-    
-    // get() retorna um BlobResponse com método .json() autenticado
-    const blob = await get('energy-cache.json');
-    
-    if (!blob) {
-      throw new Error('Blob get() returned null');
-    }
-
-    console.log('[energy-all] Parsing JSON');
+    console.log('[energy-all] Parsing JSON from blob');
     const data = await blob.json();
     
     console.log(`[energy-all] Success! Countries: ${Object.keys(data.countries || {}).length}`);
