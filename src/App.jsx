@@ -158,6 +158,8 @@ export default function App() {
 
   const [energyIntel, setEnergyIntel] = useState(null);
   const [loadingEnergyIntel, setLoadingEnergyIntel] = useState(false);
+  // Controla qual o termo de ajuda está aberto no modal (null = fechado)
+  const [termoAjuda, setTermoAjuda] = useState(null);
 
   // Active filters for Energy (Ports and Industry don't use filters)
   const [filtrosEnergia, setFiltrosEnergia] = useState([]);
@@ -200,7 +202,7 @@ export default function App() {
     loadAll();
   }, []);
 
-// Fetches MACRO data (Official Capacity + Live)
+// Busca os dados MACRO (Capacidade Oficial + Ao Vivo + Horário)
 useEffect(() => {
   if (!paisSelecionado || moduloAtivo !== 'energy') {
     setEnergyIntel(null);
@@ -214,14 +216,15 @@ useEffect(() => {
       if (data && (data.live_production_mw || data.total_installed_mw)) {
          setEnergyIntel({
            live: data.live_production_mw,
-           capacity: data.total_installed_mw
+           capacity: data.total_installed_mw,
+           timestamp: data.timestamp // <--- NOVIDADE: Guarda a hora exata dos sensores
          });
       } else {
         setEnergyIntel(null);
       }
     })
     .catch(err => {
-      console.error("Energy intel fetch failed:", err);
+      console.error("Falha ao intercetar energia:", err);
       setEnergyIntel(null);
     })
     .finally(() => setLoadingEnergyIntel(false));
@@ -486,30 +489,28 @@ const abrirNews = async () => {
                 {info}
               </div>
 
-             {/* COUNTRY ENERGY STATS PANEL (100% API DATA) */}
+             {/* PAINEL DE ESTATÍSTICAS DE ENERGIA DO PAÍS (100% API DATA) */}
              {moduloAtivo === 'energy' && paisSelecionado && (
                 <div style={{ marginTop: '12px', padding: '16px', background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8))', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.2)', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', animation: 'fadeIn 0.4s ease' }}>
-                  <h3 style={{ fontSize: '11px', color: '#10b981', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>⚡ Energy Overview</h3>
+                  <h3 style={{ fontSize: '11px', color: '#10b981', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>⚡ Energy Overview Detectado</h3>
                   
                   {loadingEnergyIntel ? (
-                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">Calculating national totals...</span>
+                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">A calcular agregados nacionais...</span>
                   ) : energyIntel && energyIntel.capacity ? (
-                    <div style={{ marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>Total Installed Capacity:</span>
-                        <strong style={{ color: '#fff', fontSize: '13px' }}>{(energyIntel.capacity / 1000).toFixed(1)} GW</strong>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>Capacidade Total:</span>
+                        <button onClick={() => setTermoAjuda('Capacidade Total')} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '11px', padding: 0 }}>ℹ️</button>
                       </div>
-                      <p style={{ color: '#64748b', fontSize: '10px', margin: '4px 0 0 0', fontStyle: 'italic', lineHeight: '1.3' }}>
-                        Max power all plants could deliver if running at 100% — the country's theoretical ceiling.
-                      </p>
+                      <strong style={{ color: '#fff', fontSize: '13px' }}>{(energyIntel.capacity / 1000).toFixed(1)} GW</strong>
                     </div>
                   ) : (
                     <div style={{ fontSize: '11px', color: '#475569', marginBottom: '12px', fontStyle: 'italic' }}>
-                      Structural country data unavailable.
+                      Dados estruturais do país indisponíveis.
                     </div>
                   )}
 
-                  {/* LIVE BLOCK */}
+                  {/* BLOCO AO VIVO */}
                   <div style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)', paddingTop: '12px', marginTop: '12px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
                       <span className="animate-pulse" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }}></span>
@@ -517,13 +518,16 @@ const abrirNews = async () => {
                     </div>
 
                     {loadingEnergyIntel ? (
-                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">Polling sensors...</span>
+                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">A intercetar sensores...</span>
                     ) : energyIntel && energyIntel.live ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         
                         {energyIntel.live['Renewable share of generation'] && (
-                          <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '6px', padding: '6px 8px', marginBottom: '4px', display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: '#10b981', fontSize: '11px', fontWeight: 600 }}>Renewable Share:</span>
+                          <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '6px', padding: '6px 8px', marginBottom: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ color: '#10b981', fontSize: '11px', fontWeight: 600 }}>Renewable Share:</span>
+                              <button onClick={() => setTermoAjuda('Renewable Share')} style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', fontSize: '10px', padding: 0, opacity: 0.7 }}>ℹ️</button>
+                            </div>
                             <strong style={{ color: '#10b981', fontSize: '11px' }}>{energyIntel.live['Renewable share of generation'].toFixed(1)}%</strong>
                           </div>
                         )}
@@ -533,15 +537,32 @@ const abrirNews = async () => {
                           .sort((a, b) => b[1] - a[1])
                           .slice(0, 4)
                           .map(([source, mw]) => (
-                          <div key={source} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', padding: '2px 0' }}>
-                            <span style={{ color: '#94a3b8' }}>{source}:</span>
+                          <div key={source} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', padding: '2px 0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              <span style={{ color: '#94a3b8' }}>{source}:</span>
+                              <button onClick={() => setTermoAjuda(source)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '10px', padding: 0 }}>ℹ️</button>
+                            </div>
                             <strong style={{ color: '#e2e8f0' }}>{mw.toFixed(0)} MW</strong>
                           </div>
                         ))}
                       </div>
                     ) : (
-                      <span style={{ color: '#475569', fontSize: '11px' }}>No real-time signal available.</span>
+                      <span style={{ color: '#475569', fontSize: '11px' }}>Sem sinal em tempo real (FIPS isolado).</span>
                     )}
+                  </div>
+
+                  {/* LINK DA FONTE DE DADOS */}
+                  <div style={{ marginTop: '14px', paddingTop: '8px', borderTop: '1px dashed rgba(255,255,255,0.05)', textAlign: 'right' }}>
+                    <a 
+                      href="https://energy-charts.info" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ color: '#64748b', fontSize: '9px', textDecoration: 'none', fontWeight: 600, letterSpacing: '0.3px', transition: 'color 0.15s' }}
+                      onMouseEnter={(e) => e.target.style.color = '#10b981'}
+                      onMouseLeave={(e) => e.target.style.color = '#64748b'}
+                    >
+                      📡 DATA SOURCE: ENERGY-CHARTS (FRAUNHOFER ISE) ↗
+                    </a>
                   </div>
                 </div>
               )}
@@ -835,6 +856,80 @@ const abrirNews = async () => {
           })}
         </MapContainer>
       </div>
+
+      
+      
+      {/* INFRASTRUCTURE INTEL INFO MODAL */}
+      {termoAjuda && (
+        <div
+          onClick={() => setTermoAjuda(null)}
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(5, 8, 16, 0.85)', backdropFilter: 'blur(8px)',
+            zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            animation: 'fadeIn 0.15s ease'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#090d16', border: '1px solid #10b98140', borderRadius: '16px',
+              padding: '24px', maxWidth: '400px', width: '85%',
+              boxShadow: '0 20px 50px rgba(0,0,0,0.8), 0 0 15px rgba(16, 185, 129, 0.1)', position: 'relative'
+            }}
+          >
+            <button
+              onClick={() => setTermoAjuda(null)}
+              style={{
+                position: 'absolute', top: '14px', right: '14px', width: '26px', height: '26px',
+                background: '#151b26', border: '1px solid #273549', borderRadius: '6px',
+                color: '#64748b', cursor: 'pointer', fontSize: '11px', display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}
+            >
+              ✕
+            </button>
+
+            <p style={{ fontSize: '10px', color: '#10b981', fontWeight: '700', letterSpacing: '1px', margin: 0, textTransform: 'uppercase' }}>
+              Glossário Estratégico
+            </p>
+            <h4 style={{ color: '#fff', fontSize: '16px', fontWeight: '800', margin: '4px 0 12px 0' }}>
+              {termoAjuda}
+            </h4>
+
+            {/* Dicionário de Definições Técnicas */}
+            <p style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5', margin: '0 0 16px 0' }}>
+              {
+                {
+                  'Capacidade Total': 'A soma total da potência de todas as centrais elétricas registadas e ativas no país. Representa o teto máximo de produção que a infraestrutura nacional aguenta debitar.',
+                  'Renewable Share': 'A percentagem exata de energia limpa (eólica, solar, hídrica, biomassa) que está a abastecer as tomadas e indústrias da nação em relação ao consumo total na hora registada.',
+                  'Nuclear': 'Energia contínua gerada por fissão atómica. É considerada energia de base estrutural por não depender de fatores meteorológicos (vento ou sol).',
+                  'Hydro Run-of-River': 'Central hídrica a "fio de água". Produz eletricidade diretamente com o fluxo e corrente natural do rio corrente, sem capacidade de armazenar água numa albufeira.',
+                  'Hydro water reservoir': 'Barragens hídricas com albufeiras de retenção tradicionais. Permitem guardar água para libertar e produzir energia apenas nas horas de maior aperto ou valor financeiro.',
+                  'Hydro pumped storage': 'Barragem de bombagem (Bateria Hidráulica). Consome energia barata da rede (à noite) para bombear água para cima, e liberta essa água para gerar energia nas horas de pico de consumo.',
+                  'Wind onshore': 'Energia eólica gerada por aerogeradores montados em terra firme (planícies ou montanhas).',
+                  'Wind offshore': 'Energia eólica gerada por turbinas instaladas em alto mar, aproveitando ventos marítimos significativamente mais potentes e constantes.',
+                  'Solar': 'Energia fotovoltaica captada diretamente através de painéis solares.',
+                  'Biomass': 'Energia gerada a partir da queima controlada de resíduos biológicos orgânicos (madeiras, biomassa florestal ou agropecuária).',
+                  'Fossil gas': 'Centrais térmicas alimentadas a gás natural. Altamente flexíveis, são ligadas com rapidez para cobrir falhas repentinas das energias renováveis.',
+                  'Thermal': 'Central térmica convencional que queima combustíveis pesados (carvão ou fuelóleo). É a fonte com maior pegada de carbono do sistema.'
+                }[termoAjuda] || 'Definição e enquadramento operacional pendente de indexação pelo comando central.'
+              }
+            </p>
+
+            {/* REFERÊNCIA TEMPORAL REAL */}
+            <div style={{ background: '#0e1420', border: '1px solid #162235', borderRadius: '8px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+              <span style={{ fontSize: '9px', color: '#64748b', fontWeight: '750', textTransform: 'uppercase', letterSpacing: '0.5px' }}>📍 Linha Temporal do Sensor</span>
+              <span style={{ fontSize: '11px', color: '#e2e8f0', fontWeight: '600' }}>
+                {energyIntel?.timestamp ? (
+                  <>Ref: {new Date(energyIntel.timestamp).toLocaleDateString('pt-PT')} às {new Date(energyIntel.timestamp).toLocaleTimeString('pt-PT', {hour: '2-digit', minute:'2-digit'})} (Hora Local)</>
+                ) : (
+                  <>Histórico Agregado Recente</>
+                )}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* BRANDS MODAL */}
       {brandsAberto && (
