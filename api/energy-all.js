@@ -18,9 +18,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    console.log('[energy-all] Downloading blob with get()');
+    console.log('[energy-all] Downloading blob');
     
-    // Especificar access: 'private' porque o store é privado
     const blob = await get('energy-cache.json', {
       access: 'private'
     });
@@ -34,8 +33,12 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log('[energy-all] Parsing JSON from blob');
-    const data = await blob.json();
+    console.log('[energy-all] Converting blob to text');
+    
+    // O blob retornado é um Response-like object
+    // Baixar como texto e depois parsear
+    const text = await blob.text();
+    const data = JSON.parse(text);
     
     console.log(`[energy-all] Success! Countries: ${Object.keys(data.countries || {}).length}`);
 
