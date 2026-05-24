@@ -1,4 +1,5 @@
 // /api/energy-all.js
+// SOLUÇÃO FINAL: usar o stream que o get() já retorna
 
 import { get } from '@vercel/blob';
 
@@ -24,7 +25,7 @@ export default async function handler(req, res) {
       access: 'private'
     });
     
-    if (!result || !result.blob) {
+    if (!result) {
       console.warn('[energy-all] Blob not found');
       return res.status(503).json({
         error: 'Cache not ready. Run /api/cron/refresh-energy first.',
@@ -33,23 +34,17 @@ export default async function handler(req, res) {
       });
     }
 
-    console.log('[energy-all] Reading blob URL');
-    // O .blob interno tem a URL do conteúdo
-    const blobUrl = result.blob.url || result.blob.downloadUrl;
+    console.log('[energy-all] Reading stream from blob');
     
-    if (!blobUrl) {
-      console.error('[energy-all] Blob object has no URL:', Object.keys(result.blob));
-      throw new Error('Blob has no URL property');
+    // O get() já retorna o conteúdo via .stream
+    // Converter o stream para texto
+    const chunks = [];
+    for await (const chunk of result.stream) {
+      chunks.push(chunk);
     }
     
-    console.log('[energy-all] Fetching content from:', blobUrl.substring(0, 60));
-    const response = await fetch(blobUrl);
-    
-    if (!response.ok) {
-      throw new Error(`Fetch failed: ${response.status}`);
-    }
-    
-    const text = await response.text();
+    const buffer = Buffer.concat(chunks);
+    const text = buffer.toString('utf-8');
     const data = JSON.parse(text);
     
     console.log(`[energy-all] Success! Countries: ${Object.keys(data.countries || {}).length}`);
