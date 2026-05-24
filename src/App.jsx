@@ -8,13 +8,9 @@ import { POWER_PLANTS } from './powerPlants';
 import { PORTS_DATA } from './portsData';
 import { INDUSTRY_DATA } from './industryData';
 import { fetchNewsForCountry, formatNewsDate } from './newsService';
-
-
-
 const URL_BASE = "/data/mundo_base.geojson";
 const URL_PAISES = "/data/paises.geojson";
 const URL_REGIOES = "/data/regioes.geojson";
-
 // ============================================================
 // AUTOMATIC LOGO RESOLUTION
 //   1. Logo.dev   2. Google Favicons   3. Styled initial
@@ -22,7 +18,6 @@ const URL_REGIOES = "/data/regioes.geojson";
 function BrandLogo({ domain, name }) {
   const [stage, setStage] = useState(0);
   useEffect(() => { setStage(0); }, [domain]);
-
   if (!domain || stage === 2) {
     const initial = (name || "?").trim().charAt(0).toUpperCase();
     return (
@@ -37,12 +32,10 @@ function BrandLogo({ domain, name }) {
       </div>
     );
   }
-
   const sources = [
     `https://img.logo.dev/${domain}?token=pk_X-1ZO13GSgeOoUrIuJ6GMQ&size=120&format=png`,
     `https://www.google.com/s2/favicons?domain=${domain}&sz=128`
   ];
-
   return (
     <img
       key={stage}
@@ -56,15 +49,12 @@ function BrandLogo({ domain, name }) {
     />
   );
 }
-
 function MapController({ paisSelecionado }) {
   const map = useMap();
-
   useEffect(() => {
     document.body.style.margin = "0";
     document.body.style.padding = "0";
     document.body.style.overflow = "hidden";
-
     const rootElement = document.getElementById('root');
     if (rootElement) {
       rootElement.style.padding = "0";
@@ -73,7 +63,6 @@ function MapController({ paisSelecionado }) {
       rootElement.style.width = "100%";
       rootElement.style.textAlign = "left";
     }
-
     setTimeout(() => {
       map.invalidateSize();
       const europeBounds = [[25, -35], [75, 55]];
@@ -82,16 +71,13 @@ function MapController({ paisSelecionado }) {
       map.setMaxBounds(europeBounds);
     }, 200);
   }, [map]);
-
   useEffect(() => {
     if (!paisSelecionado) {
       map.setView([50, 10], 3, { animate: true });
     }
   }, [paisSelecionado, map]);
-
   return null;
 }
-
 // Color and icon dictionaries
 const ENERGY_CONFIG = {
   "Hydro":         { color: "#3b82f6", icon: "💧" },
@@ -101,14 +87,12 @@ const ENERGY_CONFIG = {
   "Solar":         { color: "#eab308", icon: "☀️" },
   "Thermal":       { color: "#ef4444", icon: "🔥" }
 };
-
 const PORTS_CONFIG = {
   "Mega Hub":    { color: "#f97316", icon: "⚓" },
   "Container":   { color: "#3b82f6", icon: "📦" },
   "Liquid Bulk": { color: "#8b5cf6", icon: "🛢️" },
   "Mixed":       { color: "#14b8a6", icon: "🏗️" }
 };
-
 const INDUSTRY_CONFIG = {
   "High-Tech":  { color: "#0ea5e9", icon: "🔬" },
   "Chemicals":  { color: "#8b5cf6", icon: "⚗️" },
@@ -116,14 +100,12 @@ const INDUSTRY_CONFIG = {
   "Aerospace":  { color: "#3b82f6", icon: "✈️" },
   "Food Tech":  { color: "#f59e0b", icon: "🌾" }
 };
-
 // Country code to flag emoji converter
 const getFlagEmoji = (countryCode) => {
   if (!countryCode) return "";
   const codePoints = countryCode.toUpperCase().split('').map(char => 127397 + char.charCodeAt(0));
   return String.fromCodePoint(...codePoints);
 };
-
 // Emoji map pin generator
 const criarIconePersonalizado = (icone, cor, tamanho) => {
   return L.divIcon({
@@ -145,66 +127,52 @@ const criarIconePersonalizado = (icone, cor, tamanho) => {
     iconAnchor: [tamanho / 2, tamanho / 2]
   });
 };
-
 // Tradutor de Tempo Tático
 const formatExactIntelTime = (isoString) => {
   if (!isoString) return "OFFLINE";
   const date = new Date(isoString);
   const now = new Date();
-  
   const isToday = date.toDateString() === now.toDateString();
   const yesterday = new Date();
   yesterday.setDate(now.getDate() - 1);
   const isYesterday = date.toDateString() === yesterday.toDateString();
-  
   const timeStr = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   const dateStr = date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
-  
   if (isToday) return `TODAY, ${timeStr}`;
   if (isYesterday) return `YESTERDAY, ${timeStr}`;
   return `${dateStr.toUpperCase()} - ${timeStr}`;
 };
-
-
 export default function App() {
   const [dadosBase, setDadosBase] = useState(null);
   const [dadosPaises, setDadosPaises] = useState(null);
   const [dadosRegioes, setDadosRegioes] = useState(null);
-
   // Three navigation levels
   const [paisSelecionado, setPaisSelecionado] = useState(null);
   const [regiaoSelecionada, setRegiaoSelecionada] = useState(null);
   const [moduloAtivo, setModuloAtivo] = useState(null);
-
   const [energyIntel, setEnergyIntel] = useState(null);
   const [loadingEnergyIntel, setLoadingEnergyIntel] = useState(false);
   // Controla qual o termo de ajuda está aberto no modal (null = fechado)
   const [termoAjuda, setTermoAjuda] = useState(null);
-
   // Active filters for Energy (Ports and Industry don't use filters)
   const [filtrosEnergia, setFiltrosEnergia] = useState([]);
-
   const alternarFiltroEnergia = (tipo) => {
     setFiltrosEnergia(prev =>
       prev.includes(tipo) ? prev.filter(t => t !== tipo) : [...prev, tipo]
     );
   };
-
   // Sidebar HTML/text
   const [info, setInfo] = useState("Click a country to see official data.");
   const [infoRegiao, setInfoRegiao] = useState(null);
   const [carregando, setCarregando] = useState(true);
-
   // Brands modal state
   const [brandsAberto, setBrandsAberto] = useState(false);
   const [nomePaisAtual, setNomePaisAtual] = useState("");
-
   // News modal state
   const [newsAberto, setNewsAberto] = useState(false);
   const [newsArticles, setNewsArticles] = useState([]);
   const [newsLoading, setNewsLoading] = useState(false);
   const [newsError, setNewsError] = useState(null);
-
   // 1. Load maps
   useEffect(() => {
     const loadAll = async () => {
@@ -221,14 +189,12 @@ export default function App() {
     };
     loadAll();
   }, []);
-
 // Busca os dados MACRO (Capacidade Oficial + Ao Vivo + Horário)
 useEffect(() => {
   if (!paisSelecionado || moduloAtivo !== 'energy') {
     setEnergyIntel(null);
     return;
   }
-
   setLoadingEnergyIntel(true);
   fetch(`/api/energy?country=${paisSelecionado}`)
     .then(res => res.json())
@@ -249,24 +215,20 @@ useEffect(() => {
     })
     .finally(() => setLoadingEnergyIntel(false));
 }, [paisSelecionado, moduloAtivo]);
-
   // 2. Click COUNTRY
   const clicarNoPais = async (e) => {
     const layer = e.target;
     const feature = layer.feature;
     const mapa = layer._map;
     if (!mapa) return;
-
     const originalCode = feature.properties.CNTR_CODE;
     const name = feature.properties.NAME_LATN || feature.properties.NUTS_NAME || "Country";
     const dictionary = { "UK": "GB", "EL": "GR" };
     const searchCode = dictionary[originalCode] || originalCode;
-
     setInfo(<div><h2 style={{ color: '#10b981' }}>{name}</h2><p className="animate-pulse">Querying databases...</p></div>);
     setPaisSelecionado(originalCode);
     setNomePaisAtual(name);
     setRegiaoSelecionada(null);
-
     try {
       const [resCountries, resWB] = await Promise.all([
         fetch(`https://restcountries.com/v3.1/alpha/${searchCode}`),
@@ -275,10 +237,8 @@ useEffect(() => {
       const dataCountries = await resCountries.json();
       const dataWB = await resWB.json();
       if (!dataCountries || dataCountries.status === 404) throw new Error("Country not found");
-
       const country = dataCountries[0];
       const gdpFormatted = (dataWB[1] && dataWB[1][0]?.value) ? Math.round(dataWB[1][0].value).toLocaleString() + " $" : "N/A";
-
       setInfo(
         <div style={{ textAlign: 'left', fontSize: '11px' }}>
           <img src={country.flags.png} alt="Flag" style={{ width: '60px', borderRadius: '4px', marginBottom: '8px', border: '1px solid rgba(255,255,255,0.1)' }} />
@@ -295,7 +255,6 @@ useEffect(() => {
     } catch (err) {
       setInfo(<div><h2 style={{ color: '#10b981' }}>{name}</h2><p>Data unavailable.</p></div>);
     }
-
     const boundsExceptions = { "FR": [[41.3, -5.1], [51.1, 9.5]] };
     if (boundsExceptions[originalCode]) {
       mapa.fitBounds(boundsExceptions[originalCode], { padding: [30, 30], animate: true, duration: 0.8 });
@@ -304,20 +263,16 @@ useEffect(() => {
       mapa.fitBounds(bounds, { padding: [30, 30], animate: true, duration: 0.8 });
     }
   };
-
   // 3. Click REGION
   const clicarNaRegiao = (e) => {
     const layer = e.target;
     const feature = layer.feature;
     const regionName = feature.properties.NUTS_NAME;
     const nutsId = feature.properties.NUTS_ID;
-
     setRegiaoSelecionada(nutsId);
-
     const regionData = INFO_ESTRATEGICA_REGIOES[nutsId];
     const imgSrc = regionData ? regionData.img : IMAGEM_FALLBACK;
     const description = regionData ? regionData.desc : "Strategic data pending compilation. Analysis modules (Energy, Industry) being calibrated for this NUTS 2 zone.";
-
     setInfoRegiao(
       <div style={{ padding: '20px', background: 'rgba(30, 41, 59, 0.5)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
         <img
@@ -330,14 +285,12 @@ useEffect(() => {
       </div>
     );
   };
-
 // ===== NEWS — handler that opens the modal and fetches articles =====
 const abrirNews = async () => {
   if (!paisSelecionado) return;
   setNewsAberto(true);
   setNewsLoading(true);
   setNewsError(null);
-
   try {
     const data = await fetchNewsForCountry(paisSelecionado);
     if (data && data.articles && data.articles.length > 0) {
@@ -354,17 +307,14 @@ const abrirNews = async () => {
     setNewsLoading(false);
   }
 };
-
   const regioesFiltradas = useMemo(() => {
     if (!dadosRegioes || !paisSelecionado) return null;
     return { type: "FeatureCollection", features: dadosRegioes.features.filter(f => f.properties.CNTR_CODE === paisSelecionado) };
   }, [dadosRegioes, paisSelecionado]);
-
   const brandsDoPais = useMemo(() => {
     if (!paisSelecionado) return [];
     return BRANDS_PAISES[paisSelecionado] || [];
   }, [paisSelecionado]);
-
   // Filter and prepare power plants for rendering
   const centraisRenderizadas = useMemo(() => {
     if (moduloAtivo !== 'energy') return [];
@@ -377,8 +327,6 @@ const abrirNews = async () => {
     }
     return filtradas;
   }, [moduloAtivo, filtrosEnergia, paisSelecionado]);
-
-
   // PORTS — no filters, only country restriction
   const portosRenderizados = useMemo(() => {
     if (moduloAtivo !== 'ports') return [];
@@ -388,7 +336,6 @@ const abrirNews = async () => {
     }
     return filtrados;
   }, [moduloAtivo, paisSelecionado]);
-
   // INDUSTRY — no filters, only country restriction
   const industriasRenderizadas = useMemo(() => {
     if (moduloAtivo !== 'industry') return [];
@@ -398,7 +345,6 @@ const abrirNews = async () => {
     }
     return filtradas;
   }, [moduloAtivo, paisSelecionado]);
-
   const statsIndustria = useMemo(() => {
     if (moduloAtivo !== 'industry' || !paisSelecionado) return null;
     const industriasDoPais = INDUSTRY_DATA.filter(p => p.countryCode === paisSelecionado);
@@ -406,7 +352,6 @@ const abrirNews = async () => {
     const mediaMarketShare = industriasDoPais.reduce((acc, curr) => acc + curr.globalMarketShare, 0) / industriasDoPais.length;
     return { count: industriasDoPais.length, share: mediaMarketShare.toFixed(0) };
   }, [moduloAtivo, paisSelecionado]);
-
   const statsPortos = useMemo(() => {
     if (moduloAtivo !== 'ports' || !paisSelecionado) return null;
     const portosDoPais = PORTS_DATA.filter(p => p.countryCode === paisSelecionado);
@@ -415,13 +360,10 @@ const abrirNews = async () => {
     const totalTeu = portosDoPais.reduce((acc, curr) => acc + curr.teuMillions, 0);
     return { tons: totalTons.toLocaleString(), teu: totalTeu.toFixed(1) };
   }, [moduloAtivo, paisSelecionado]);
-
   return (
     <div style={{ display: 'flex', height: '100vh', width: '100%', background: '#0a0f1e', color: 'white', fontFamily: 'sans-serif', boxSizing: 'border-box' }}>
-
       {/* SIDEBAR */}
       <div style={{ width: '280px', minWidth: '280px', padding: '24px 16px', borderTopRightRadius: '24px', borderBottomRightRadius: '24px', height: '100vh', margin: 0, boxShadow: '10px 0 30px rgba(0,0,0,0.5)', zIndex: 1000, background: '#0a0f1e', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
-
         {/* HEADER */}
         <div style={{ display: 'flex', alignItems: 'flex-start', marginBottom: '32px', paddingLeft: '8px', gap: '12px' }}>
           {paisSelecionado && (
@@ -440,7 +382,6 @@ const abrirNews = async () => {
               ←
             </button>
           )}
-
           <div>
             <h2 style={{ color: '#10b981', margin: 0, fontSize: '22px', fontWeight: '800', letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               {!paisSelecionado && <span style={{ fontSize: '24px' }}>🇪🇺</span>} EuroScope
@@ -448,9 +389,7 @@ const abrirNews = async () => {
             <p style={{ fontSize: '11px', color: '#64748b', fontWeight: '500', marginTop: '4px' }}>INTEL & STRATEGIC DATA</p>
           </div>
         </div>
-
         <div className="sidebar-scroll" style={{ flex: 1, overflowY: 'auto', paddingRight: '8px' }}>
-
           {/* LEVEL 1: GLOBAL MENU */}
           {!paisSelecionado ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -467,7 +406,6 @@ const abrirNews = async () => {
                     <span style={{ fontSize: '16px', opacity: moduloAtivo === item.id ? 1 : 0.6 }}>{item.icon}</span>
                     <div style={{ fontWeight: '600', fontSize: '13px', color: moduloAtivo === item.id ? '#10b981' : '#cbd5e1' }}>{item.label}</div>
                   </div>
-
                   {/* ENERGY SUBFILTERS (only module with filters) */}
                   {moduloAtivo === 'energy' && item.id === 'energy' && (
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', paddingLeft: '14px', marginTop: '4px', animation: 'fadeIn 0.3s ease' }}>
@@ -495,105 +433,99 @@ const abrirNews = async () => {
                 </div>
               ))}
             </div>
-
           /* LEVEL 3: REGION SELECTED */
           ) : regiaoSelecionada ? (
             <div style={{ animation: 'fadeIn 0.4s ease' }}>
               {infoRegiao}
             </div>
-
           /* LEVEL 2: COUNTRY SELECTED */
           ) : (
             <div style={{ animation: 'fadeIn 0.4s ease' }}>
               <div style={{ padding: '20px', background: 'rgba(30, 41, 59, 0.5)', borderRadius: '20px', border: '1px solid rgba(255,255,255,0.05)', backdropFilter: 'blur(10px)' }}>
                 {info}
               </div>
-
              {/* ENERGY STATS PANEL (100% API DATA) */}
              {moduloAtivo === 'energy' && paisSelecionado && (
-                <div style={{ marginTop: '12px', padding: '16px', background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8))', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.2)', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', animation: 'fadeIn 0.4s ease' }}>
-                  <h3 style={{ fontSize: '11px', color: '#10b981', margin: '0 0 12px 0', textTransform: 'uppercase', letterSpacing: '1px' }}>⚡ Strategic Energy Overview</h3>
-                  
-                  {loadingEnergyIntel ? (
-                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">Calculating national aggregates...</span>
-                  ) : energyIntel && energyIntel.capacity ? (
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span style={{ color: '#94a3b8', fontSize: '12px' }}>Total National Capacity:</span>
-                        <button onClick={() => setTermoAjuda('Total Capacity')} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '11px', padding: 0 }}>ℹ️</button>
+                    <div style={{ marginTop: '12px', padding: '16px', background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8))', borderRadius: '16px', border: '1px solid rgba(16, 185, 129, 0.2)', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', animation: 'fadeIn 0.4s ease' }}>
+                      {/* TÍTULO PROTEGIDO CONTRA QUEBRAS */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '14px' }}>
+                        <span style={{ fontSize: '14px' }}>⚡</span>
+                        <h3 style={{ fontSize: '11px', color: '#10b981', margin: 0, textTransform: 'uppercase', letterSpacing: '1px', whiteSpace: 'nowrap' }}>Strategic Energy</h3>
                       </div>
-                      <strong style={{ color: '#fff', fontSize: '13px' }}>{(energyIntel.capacity / 1000).toFixed(1)} GW</strong>
-                    </div>
-                  ) : (
-                    <div style={{ fontSize: '11px', color: '#475569', marginBottom: '12px', fontStyle: 'italic' }}>
-                      Structural data for this territory is unavailable.
+                      {loadingEnergyIntel ? (
+                          <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">Calculating national aggregates...</span>
+                      ) : energyIntel && energyIntel.capacity ? (
+                        {/* ALINHAMENTO FLEXBOX PROTEGIDO */}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <span style={{ color: '#94a3b8', fontSize: '12px', whiteSpace: 'nowrap' }}>Total Capacity:</span>
+                            <button onClick={() => setTermoAjuda('Total Capacity')} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '11px', padding: 0, display: 'flex', alignItems: 'center' }}>ℹ️</button>
+                          </div>
+                          <strong style={{ color: '#fff', fontSize: '13px', whiteSpace: 'nowrap' }}>{(energyIntel.capacity / 1000).toFixed(1)} GW</strong>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '11px', color: '#475569', marginBottom: '12px', fontStyle: 'italic' }}>
+                          Structural data for this territory is unavailable.
+                        </div>
+                      )}
+                      {/* LIVE GRID BLOCK */}
+                      <div style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)', paddingTop: '12px', marginTop: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+                          <span className="animate-pulse" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }}></span>
+                          <span style={{ color: '#10b981', fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>Live Grid Intel</span>
+                          {/* ETIQUETA DA HORA EXATA DO SENSOR */}
+                          {energyIntel?.timestamp && (
+                            <span style={{ marginLeft: 'auto', fontSize: '9px', color: '#94a3b8', fontWeight: 800, background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
+                              {formatExactIntelTime(energyIntel.timestamp)}
+                            </span>
+                          )}
+                        </div>
+                        {loadingEnergyIntel ? (
+                          <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">Intercepting national sensors...</span>
+                        ) : energyIntel && energyIntel.live ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {energyIntel.live['Renewable share of generation'] && (
+                              <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '6px', padding: '6px 8px', marginBottom: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <span style={{ color: '#10b981', fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap' }}>Renewable Share:</span>
+                                  <button onClick={() => setTermoAjuda('Renewable Share')} style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', fontSize: '10px', padding: 0, opacity: 0.7, display: 'flex' }}>ℹ️</button>
+                                </div>
+                                <strong style={{ color: '#10b981', fontSize: '11px', whiteSpace: 'nowrap' }}>{energyIntel.live['Renewable share of generation'].toFixed(1)}%</strong>
+                              </div>
+                            )}
+                            {Object.entries(energyIntel.live)
+                              .filter(([key]) => !key.includes('share') && key !== 'Load' && key !== 'Residual load')
+                              .sort((a, b) => b[1] - a[1])
+                              .slice(0, 4)
+                              .map(([source, mw]) => (
+                              <div key={source} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', padding: '2px 0' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                  <span style={{ color: '#94a3b8', whiteSpace: 'nowrap' }}>{source}:</span>
+                                  <button onClick={() => setTermoAjuda(source)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '10px', padding: 0, display: 'flex' }}>ℹ️</button>
+                                </div>
+                                <strong style={{ color: '#e2e8f0', whiteSpace: 'nowrap' }}>{mw.toFixed(0)} MW</strong>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <span style={{ color: '#475569', fontSize: '11px' }}>No real-time signal (FIPS isolated).</span>
+                        )}
+                      </div>
+                      {/* DATA SOURCE LINK */}
+                      <div style={{ marginTop: '14px', paddingTop: '8px', borderTop: '1px dashed rgba(255,255,255,0.05)', textAlign: 'right' }}>
+                        <a 
+                          href="https://energy-charts.info" 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          style={{ color: '#64748b', fontSize: '9px', textDecoration: 'none', fontWeight: 600, letterSpacing: '0.3px', transition: 'color 0.15s', whiteSpace: 'nowrap' }}
+                          onMouseEnter={(e) => e.target.style.color = '#10b981'}
+                          onMouseLeave={(e) => e.target.style.color = '#64748b'}
+                        >
+                          📡 DATA SOURCE: ENERGY-CHARTS ↗
+                        </a>
+                      </div>
                     </div>
                   )}
-
-                  {/* LIVE GRID BLOCK (AGORA COM TEMPO EXATO) */}
-                  <div style={{ borderTop: '1px solid rgba(16, 185, 129, 0.2)', paddingTop: '12px', marginTop: '12px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-                      <span className="animate-pulse" style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444', boxShadow: '0 0 8px #ef4444' }}></span>
-                      <span style={{ color: '#10b981', fontSize: '10px', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Live Grid Intel</span>
-                      
-                      {/* ETIQUETA DA HORA EXATA DO SENSOR */}
-                      {energyIntel?.timestamp && (
-                        <span style={{ marginLeft: 'auto', fontSize: '9px', color: '#94a3b8', fontWeight: 800, background: 'rgba(255,255,255,0.08)', padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.5px' }}>
-                          {formatExactIntelTime(energyIntel.timestamp)}
-                        </span>
-                      )}
-                    </div>
-
-                    {loadingEnergyIntel ? (
-                      <span style={{ color: '#64748b', fontSize: '11px', display: 'block', padding: '8px 0' }} className="animate-pulse">Intercepting national sensors...</span>
-                    ) : energyIntel && energyIntel.live ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                        
-                        {energyIntel.live['Renewable share of generation'] && (
-                          <div style={{ background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: '6px', padding: '6px 8px', marginBottom: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span style={{ color: '#10b981', fontSize: '11px', fontWeight: 600 }}>Renewable Share:</span>
-                              <button onClick={() => setTermoAjuda('Renewable Share')} style={{ background: 'none', border: 'none', color: '#10b981', cursor: 'pointer', fontSize: '10px', padding: 0, opacity: 0.7 }}>ℹ️</button>
-                            </div>
-                            <strong style={{ color: '#10b981', fontSize: '11px' }}>{energyIntel.live['Renewable share of generation'].toFixed(1)}%</strong>
-                          </div>
-                        )}
-
-                        {Object.entries(energyIntel.live)
-                          .filter(([key]) => !key.includes('share') && key !== 'Load' && key !== 'Residual load')
-                          .sort((a, b) => b[1] - a[1])
-                          .slice(0, 4)
-                          .map(([source, mw]) => (
-                          <div key={source} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px', padding: '2px 0' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                              <span style={{ color: '#94a3b8' }}>{source}:</span>
-                              <button onClick={() => setTermoAjuda(source)} style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer', fontSize: '10px', padding: 0 }}>ℹ️</button>
-                            </div>
-                            <strong style={{ color: '#e2e8f0' }}>{mw.toFixed(0)} MW</strong>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <span style={{ color: '#475569', fontSize: '11px' }}>No real-time signal (FIPS isolated).</span>
-                    )}
-                  </div>
-
-                  {/* DATA SOURCE LINK */}
-                  <div style={{ marginTop: '14px', paddingTop: '8px', borderTop: '1px dashed rgba(255,255,255,0.05)', textAlign: 'right' }}>
-                    <a 
-                      href="https://energy-charts.info" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      style={{ color: '#64748b', fontSize: '9px', textDecoration: 'none', fontWeight: 600, letterSpacing: '0.3px', transition: 'color 0.15s' }}
-                      onMouseEnter={(e) => e.target.style.color = '#10b981'}
-                      onMouseLeave={(e) => e.target.style.color = '#64748b'}
-                    >
-                      📡 DATA SOURCE: ENERGY-CHARTS (FRAUNHOFER ISE) ↗
-                    </a>
-                  </div>
-                </div>
-              )}
-
               {/* PORTS STATS PANEL */}
               {moduloAtivo === 'ports' && statsPortos && (
                 <div style={{ marginTop: '12px', padding: '16px', background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8))', borderRadius: '16px', border: '1px solid rgba(249, 115, 22, 0.2)', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', animation: 'fadeIn 0.4s ease' }}>
@@ -608,7 +540,6 @@ const abrirNews = async () => {
                   </div>
                 </div>
               )}
-
               {/* INDUSTRY STATS PANEL */}
               {moduloAtivo === 'industry' && statsIndustria && (
                 <div style={{ marginTop: '12px', padding: '16px', background: 'linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.8))', borderRadius: '16px', border: '1px solid rgba(14, 165, 233, 0.2)', boxShadow: '0 4px 15px rgba(0,0,0,0.3)', animation: 'fadeIn 0.4s ease' }}>
@@ -623,7 +554,6 @@ const abrirNews = async () => {
                   </div>
                 </div>
               )}
-
               {/* BRANDS BUTTON */}
               <button
                 onClick={() => setBrandsAberto(true)}
@@ -649,7 +579,6 @@ const abrirNews = async () => {
                 <span style={{ fontSize: '16px' }}>🏷️</span>
                 <span>BRANDS</span>
               </button>
-
               {/* NEWS BUTTON */}
               <button
                 onClick={abrirNews}
@@ -676,17 +605,14 @@ const abrirNews = async () => {
             </div>
           )}
         </div>
-
         <div style={{ marginTop: 'auto', padding: '16px 8px', borderTop: '1px solid rgba(255,255,255,0.05)', fontSize: '10px', color: '#475569', textAlign: 'center' }}>
           v2.5.0 • Live Intel
         </div>
       </div>
-
       {/* MAP */}
       <div style={{ flexGrow: 1, height: '100vh', position: 'relative', background: '#b3e5fc', overflow: 'hidden' }}>
         <MapContainer preferCanvas={true} center={[45, 5]} zoom={3} zoomSnap={0.25} zoomControl={false} zoomAnimationThreshold={10} style={{ height: '100%', width: '100%', background: '#b3e5fc' }}>
           <MapController paisSelecionado={paisSelecionado} />
-
           {/* LAYER 0: UNIFIED WORLD */}
           {dadosBase && (
             <GeoJSON
@@ -695,7 +621,6 @@ const abrirNews = async () => {
               interactive={false}
             />
           )}
-
           {/* Layer 1: Countries */}
           {dadosPaises && (
             <GeoJSON
@@ -714,7 +639,6 @@ const abrirNews = async () => {
               }}
             />
           )}
-
           {/* Layer 2: NUTS 2 Regions */}
           {paisSelecionado && regioesFiltradas && (
             <GeoJSON
@@ -731,12 +655,10 @@ const abrirNews = async () => {
               }}
             />
           )}
-
           {/* POWER PLANTS LAYER */}
           {centraisRenderizadas.map((plant) => {
             const conf = ENERGY_CONFIG[plant.type];
             const tamanhoCalculado = Math.max(24, Math.min(34, 18 + Math.sqrt(plant.capacityMW) / 4));
-
             return (
               <Marker
                 key={plant.id}
@@ -745,14 +667,12 @@ const abrirNews = async () => {
               >
                 <Tooltip direction="auto" offset={[0, -(tamanhoCalculado / 2)]} opacity={1} className="custom-energy-tooltip">
                   <div style={{ width: '260px', background: '#0f172a', border: `1px solid ${conf.color}`, borderRadius: '12px', overflow: 'hidden', color: 'white', fontFamily: 'sans-serif', boxShadow: '0 10px 30px rgba(0,0,0,0.8)' }}>
-
                     {plant.image && (
                       <div style={{ width: '100%', height: '140px', position: 'relative' }}>
                         <img src={plant.image} alt={plant.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to bottom, transparent 40%, #0f172a 100%)' }}></div>
                       </div>
                     )}
-
                     <div style={{ padding: '16px', paddingTop: plant.image ? '4px' : '16px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', marginBottom: '8px', whiteSpace: 'normal' }}>
                         <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: '#fff', paddingRight: '8px', lineHeight: '1.2' }}>{plant.name} {getFlagEmoji(plant.countryCode)}</h4>
@@ -760,7 +680,6 @@ const abrirNews = async () => {
                           {conf.icon} {plant.type}
                         </span>
                       </div>
-
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '10px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
                           <span style={{ color: '#94a3b8' }}>Capacity:</span>
@@ -771,7 +690,6 @@ const abrirNews = async () => {
                           <strong style={{ color: '#fff' }}>{plant.annualProductionTWh} TWh</strong>
                         </div>
                       </div>
-
                       <div style={{ background: 'rgba(255,255,255,0.05)', padding: '8px', borderRadius: '6px', fontSize: '11px', color: '#cbd5e1', fontStyle: 'italic', lineHeight: '1.4', whiteSpace: 'normal' }}>
                         {plant.curiosity}
                       </div>
@@ -781,12 +699,10 @@ const abrirNews = async () => {
               </Marker>
             );
           })}
-
           {/* PORTS LAYER */}
           {portosRenderizados.map((port) => {
             const conf = PORTS_CONFIG[port.type];
             const tamanhoCalculado = Math.max(24, Math.min(34, 18 + Math.sqrt(port.cargoMillionTons)));
-
             return (
               <Marker
                 key={port.id}
@@ -795,14 +711,12 @@ const abrirNews = async () => {
               >
                 <Tooltip direction="auto" offset={[0, -(tamanhoCalculado / 2)]} opacity={1} className="custom-energy-tooltip">
                   <div style={{ width: '260px', background: '#0f172a', border: `1px solid ${conf.color}`, borderRadius: '12px', overflow: 'hidden', color: 'white', fontFamily: 'sans-serif', boxShadow: '0 10px 30px rgba(0,0,0,0.8)' }}>
-
                     {port.image && (
                       <div style={{ width: '100%', height: '140px', position: 'relative' }}>
                         <img src={port.image} alt={port.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to bottom, transparent 40%, #0f172a 100%)' }}></div>
                       </div>
                     )}
-
                     <div style={{ padding: '16px', paddingTop: port.image ? '4px' : '16px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', marginBottom: '8px', whiteSpace: 'normal' }}>
                         <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: '#fff', paddingRight: '8px', lineHeight: '1.2' }}>{port.name} {getFlagEmoji(port.countryCode)}</h4>
@@ -810,7 +724,6 @@ const abrirNews = async () => {
                           {conf.icon} {port.type}
                         </span>
                       </div>
-
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '10px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
                           <span style={{ color: '#94a3b8' }}>Total Cargo:</span>
@@ -821,7 +734,6 @@ const abrirNews = async () => {
                           <strong style={{ color: '#fff' }}>{port.teuMillions}M TEU</strong>
                         </div>
                       </div>
-
                       <div style={{ background: 'rgba(255,255,255,0.05)', padding: '8px', borderRadius: '6px', fontSize: '11px', color: '#cbd5e1', fontStyle: 'italic', lineHeight: '1.4', whiteSpace: 'normal' }}>
                         {port.curiosity}
                       </div>
@@ -831,12 +743,10 @@ const abrirNews = async () => {
               </Marker>
             );
           })}
-
           {/* INDUSTRY LAYER */}
           {industriasRenderizadas.map((ind) => {
             const conf = INDUSTRY_CONFIG[ind.type];
             const tamanhoCalculado = Math.max(26, Math.min(36, 15 + (ind.globalMarketShare / 4)));
-
             return (
               <Marker
                 key={ind.id}
@@ -845,14 +755,12 @@ const abrirNews = async () => {
               >
                 <Tooltip direction="auto" offset={[0, -(tamanhoCalculado / 2)]} opacity={1} className="custom-energy-tooltip">
                   <div style={{ width: '260px', background: '#0f172a', border: `1px solid ${conf.color}`, borderRadius: '12px', overflow: 'hidden', color: 'white', fontFamily: 'sans-serif', boxShadow: '0 10px 30px rgba(0,0,0,0.8)' }}>
-
                     {ind.image && (
                       <div style={{ width: '100%', height: '140px', position: 'relative' }}>
                         <img src={ind.image} alt={ind.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'linear-gradient(to bottom, transparent 40%, #0f172a 100%)' }}></div>
                       </div>
                     )}
-
                     <div style={{ padding: '16px', paddingTop: ind.image ? '4px' : '16px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '8px', marginBottom: '8px', whiteSpace: 'normal' }}>
                         <h4 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', color: '#fff', paddingRight: '8px', lineHeight: '1.2' }}>{ind.name} {getFlagEmoji(ind.countryCode)}</h4>
@@ -860,7 +768,6 @@ const abrirNews = async () => {
                           {conf.icon} {ind.type}
                         </span>
                       </div>
-
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginBottom: '10px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
                           <span style={{ color: '#94a3b8' }}>Key Product:</span>
@@ -871,7 +778,6 @@ const abrirNews = async () => {
                           <strong style={{ color: '#10b981' }}>{ind.globalMarketShare}%</strong>
                         </div>
                       </div>
-
                       <div style={{ background: 'rgba(255,255,255,0.05)', padding: '8px', borderRadius: '6px', fontSize: '11px', color: '#cbd5e1', fontStyle: 'italic', lineHeight: '1.4', whiteSpace: 'normal' }}>
                         {ind.curiosity}
                       </div>
@@ -883,9 +789,6 @@ const abrirNews = async () => {
           })}
         </MapContainer>
       </div>
-
-
-      
       {/* FLOATING GLOSSARY POPUP (NON-BLOCKING) */}
       {termoAjuda && (
         <div
@@ -907,14 +810,12 @@ const abrirNews = async () => {
           >
             ✕
           </button>
-
           <p style={{ fontSize: '10px', color: '#10b981', fontWeight: '700', letterSpacing: '1px', margin: 0, textTransform: 'uppercase' }}>
             Strategic Glossary
           </p>
           <h4 style={{ color: '#fff', fontSize: '16px', fontWeight: '800', margin: '4px 0 12px 0' }}>
             {termoAjuda}
           </h4>
-
           {/* English Dictionary */}
           <p style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: '1.5', margin: 0 }}>
             {
@@ -936,7 +837,6 @@ const abrirNews = async () => {
           </p>
         </div>
       )}
-           
       {/* BRANDS MODAL */}
       {brandsAberto && (
         <div
@@ -969,7 +869,6 @@ const abrirNews = async () => {
             >
               ✕
             </button>
-
             <div style={{ marginBottom: '24px' }}>
               <p style={{ fontSize: '11px', color: '#0ea5e9', fontWeight: '700', letterSpacing: '1.5px', margin: 0, textTransform: 'uppercase' }}>
                 🏷️ Brands
@@ -981,7 +880,6 @@ const abrirNews = async () => {
                 The most well-known companies of the country
               </p>
             </div>
-
             {brandsDoPais.length > 0 ? (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '12px' }}>
                 {brandsDoPais.map((brand, idx) => (
@@ -1032,7 +930,6 @@ const abrirNews = async () => {
           </div>
         </div>
       )}
-
       {/* NEWS MODAL */}
       {newsAberto && (
         <div
@@ -1063,7 +960,6 @@ const abrirNews = async () => {
         fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, sans-serif'
       }}
           >
-
         {/* Subtle grid pattern overlay for "terminal" feel */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, height: '120px',
@@ -1071,7 +967,6 @@ const abrirNews = async () => {
         borderRadius: '20px 20px 0 0',
         pointerEvents: 'none'
       }} />
-
             <button
         onClick={() => setNewsAberto(false)}
         onMouseEnter={(e) => {
@@ -1099,7 +994,6 @@ const abrirNews = async () => {
             >
               ✕
             </button>
-
             <div style={{ marginBottom: '20px' }}>
               <p style={{ fontSize: '11px', color: '#a855f7', fontWeight: '700', letterSpacing: '1.5px', margin: 0, textTransform: 'uppercase' }}>
                 📰 Latest News
@@ -1111,13 +1005,11 @@ const abrirNews = async () => {
                 Economy · Politics · Geopolitics · Today
               </p>
             </div>
-
             {newsLoading && (
               <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
                 Loading news…
               </div>
             )}
-
             {!newsLoading && newsError && (
               <div style={{
                 padding: '24px', textAlign: 'center',
@@ -1128,13 +1020,11 @@ const abrirNews = async () => {
                 {newsError}
               </div>
             )}
-
             {!newsLoading && !newsError && newsArticles.length === 0 && (
               <div style={{ padding: '40px 20px', textAlign: 'center', color: '#94a3b8', fontSize: '13px' }}>
                 No recent articles for this country.
               </div>
             )}
-
             {!newsLoading && !newsError && newsArticles.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {newsArticles.map((art, i) => (
@@ -1177,7 +1067,6 @@ const abrirNews = async () => {
                       />
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      
                       {/* 1. CLEAN TITLE */}
                       <p style={{
                         color: '#fff', fontSize: '13px', fontWeight: 700,
@@ -1191,7 +1080,6 @@ const abrirNews = async () => {
                           ? art.title.substring(0, art.title.lastIndexOf(' - ')) 
                           : art.title}
                       </p>
-                      
                       {/* 2. NEWSPAPER NAME EXTRACTED FROM TITLE */}
                       <p style={{
                         margin: '4px 0 0 0',
@@ -1206,7 +1094,6 @@ const abrirNews = async () => {
                               ? art.title.substring(art.title.lastIndexOf(' - ') + 3).trim() 
                               : (art.source || 'External Source')}
                       </p>
-
                       {/* 3. DATE AND SCORE */}
                       <div style={{
                         color: '#64748b',
@@ -1224,14 +1111,11 @@ const abrirNews = async () => {
                             Score: {art.score.toFixed(1)}
                           </span>
                         )}
-                        
                         {process.env.NODE_ENV === 'development' && (
                           <span style={{ opacity: 0.5 }}>·</span>
                         )}
-
                         <span>{formatNewsDate(art.pubDate)}</span>
                       </div>
-                      
                     </div>
                   </a>
                 ))}
@@ -1243,3 +1127,4 @@ const abrirNews = async () => {
     </div>
   );
 }
+ 
