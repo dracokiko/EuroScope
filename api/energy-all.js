@@ -1,23 +1,31 @@
 // /api/energy-all.js
-import { list } from '@vercel/blob';
+// CORRIGIDO: usa get() do SDK que lida com autenticação automaticamente
+
+import { head, get } from '@vercel/blob';
 
 let memoryCache = null;
 let memoryCacheTime = 0;
 const MEMORY_TTL_MS = 5 * 60 * 1000; // 5 min
 
 export default async function handler(req, res) {
-  // Cache em memória (serverless function quente)
+  console.log('[energy-all] Request received');
+  
+  // Cache em memória
   if (memoryCache && (Date.now() - memoryCacheTime) < MEMORY_TTL_MS) {
+    console.log('[energy-all] Serving from memory cache');
     res.setHeader('Cache-Control', 's-maxage=3600, stale-while-revalidate=86400');
     res.setHeader('X-Cache', 'memory-hit');
     return res.status(200).json(memoryCache);
   }
 
   try {
-    // List devolve URLs pré-assinados, funcionam mesmo com store privado
-    const { blobs } = await list({ prefix: 'energy-cache.json', limit: 1 });
+    console.log('[energy-all] Checking if blob exists');
     
-    if (blobs.length === 0) {
+    // Verificar se o blob existe (head = metadata sem baixar o conteúdo)
+    const blobInfo = await head('energy-cache.json');
+    
+    if (!blobInfo) {
+      console.warn('[energy-all] Blob not found');
       return res.status(503).json({
         error: 'Cache not ready. Run /api/cron/refresh-energy first.',
         generated_at: null,
@@ -25,15 +33,21 @@ export default async function handler(req, res) {
       });
     }
 
-    const blobUrl = blobs[0].url;
-    const blobRes = await fetch(blobUrl);
+    console.log('[energy-all] Blob exists, downloading content');
     
-    if (!blobRes.ok) {
-      throw new Error(`Blob fetch failed: ${blobRes.status}`);
+    // get() retorna um BlobResponse com método .json() autenticado
+    const blob = await get('energy-cache.json');
+    
+    if (!blob) {
+      throw new Error('Blob get() returned null');
     }
-    
-    const data = await blobRes.json();
 
+    console.log('[energy-all] Parsing JSON');
+    const data = await blob.json();
+    
+    console.log(`[energy-all] Success! Countries: ${Object.keys(data.countries || {}).length}`);
+
+    // Cache
     memoryCache = data;
     memoryCacheTime = Date.now();
 
@@ -42,7 +56,12 @@ export default async function handler(req, res) {
     return res.status(200).json(data);
 
   } catch (err) {
-    console.error('[energy-all] erro:', err);
-    return res.status(500).json({ error: err.message });
+    console.error('[energy-all] ERROR:', err.message);
+    console.error('[energy-all] Stack:', err.stack);
+    
+    return res.status(500).json({ 
+      error: err.message,
+      details: process.env.NODE_ENV === 'development' ? err.stack : undefined
+    });
   }
 }
