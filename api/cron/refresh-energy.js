@@ -18,7 +18,9 @@ const SUPPORTED_COUNTRIES = [
 ];
 
 // energy-charts.info estoura facilmente em paralelo, vamos sequencial com pausa
-const DELAY_BETWEEN_REQUESTS_MS = 3500; // 3.5s entre países (era 1.5s)
+// Nota: delays baixos para permitir execução manual (timeout 10s no Free tier).
+// O cron automático (5min timeout) pode usar delays maiores se necessário.
+const DELAY_BETWEEN_REQUESTS_MS = 200; // Muito baixo, mas permite completar em <10s
 
 async function sleep(ms) {
   return new Promise(r => setTimeout(r, ms));
@@ -68,7 +70,7 @@ async function fetchCountry(code) {
   }
 
   // Pequena pausa entre os dois endpoints do mesmo país
-  await sleep(800); // aumentado de 300ms para 800ms
+  await sleep(100); // mínimo para evitar rate limit imediato
 
   // --- INSTALLED ---
   try {
@@ -148,14 +150,13 @@ export default async function handler(req, res) {
     countries: results
   };
 
-  // Guardar no Vercel Blob (público, com cache CDN)
+  // Guardar no Vercel Blob (privado, conforme configuração do store)
   try {
     const blob = await put('energy-cache.json', JSON.stringify(payload), {
-      access: 'public',
+      access: 'private',  // IMPORTANTE: o store foi criado como privado
       contentType: 'application/json',
-      addRandomSuffix: false,        // queremos sempre o mesmo URL
-      allowOverwrite: true,
-      cacheControlMaxAge: 60 * 60 * 6 // CDN cache 6h (revalidamos a cada cron)
+      addRandomSuffix: false,
+      cacheControlMaxAge: 60 * 60 * 6
     });
 
     return res.status(200).json({
