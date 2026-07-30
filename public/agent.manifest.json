@@ -4,8 +4,8 @@
   "description": "Monitors energy data and news.",
   "criticality": "high",
   "stack": ["React", "Vite", "Vercel"],
-  "repo": "https://github.com/jmarrucho/energy-dashboard",
+  "repo": "https://github.com/dracokiko/EuroScope",
   "owner": "José Marrucho",
-  "updatedAt": "2024-08-01",
+  "updatedAt": "2026-08-01",
   "links": {}
 }
