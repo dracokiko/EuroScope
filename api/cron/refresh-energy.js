@@ -17,10 +17,7 @@ const SUPPORTED_COUNTRIES = [
   'lv', 'nl', 'no', 'pl', 'pt', 'ro', 'se', 'si', 'sk'
 ];
 
-// energy-charts.info estoura facilmente em paralelo, vamos sequencial com pausa
-// Nota: delays baixos para permitir execução manual (timeout 10s no Free tier).
-// O cron automático (5min timeout) pode usar delays maiores se necessário.
-const DELAY_BETWEEN_REQUESTS_MS = 200; // Muito baixo, mas permite completar em <10s
+const DELAY_BETWEEN_REQUESTS_MS = 200;
 
 async function sleep(ms) {
   return new Promise(r => setTimeout(r, ms));
@@ -35,6 +32,7 @@ async function fetchCountry(code) {
   let live_production_mw = null;
   let total_installed_mw = null;
   let timestamp = null;
+  let error = null;
 
   // --- LIVE ---
   try {
@@ -59,18 +57,19 @@ async function fetchCountry(code) {
         });
         if (Object.keys(live).length > 0) live_production_mw = live;
       }
-      // Timestamp do snapshot da API (em segundos UNIX)
       if (Array.isArray(liveData?.unix_seconds) && liveData.unix_seconds.length > 0) {
         const lastUnix = liveData.unix_seconds[liveData.unix_seconds.length - 1];
         timestamp = new Date(lastUnix * 1000).toISOString();
       }
+    } else {
+        throw new Error(`Live API failed with status ${liveRes.status}`);
     }
   } catch (err) {
     console.warn(`[cron] live ${code} falhou: ${err.message}`);
+    error = err.message;
   }
 
-  // Pequena pausa entre os dois endpoints do mesmo país
-  await sleep(100); // mínimo para evitar rate limit imediato
+  await sleep(100);
 
   // --- INSTALLED ---
   try {
@@ -92,21 +91,25 @@ async function fetchCountry(code) {
             }
           }
           if (typeof latestGW === 'number' && latestGW > 0) {
-            totalMW += latestGW * 1000; // API devolve GW, converter para MW
+            totalMW += latestGW * 1000;
           }
         });
         if (totalMW > 0) total_installed_mw = Math.round(totalMW);
       }
+    } else {
+        throw new Error(`Installed API failed with status ${installedRes.status}`);
     }
   } catch (err) {
     console.warn(`[cron] installed ${code} falhou: ${err.message}`);
+    error = (error ? error + "; " : "") + err.message;
   }
 
-  return { live_production_mw, total_installed_mw, timestamp };
+  const hasCompletedWithoutError = live_production_mw !== null && total_installed_mw !== null && error === null;
+
+  return { live_production_mw, total_installed_mw, timestamp, error, success: hasCompletedWithoutError };
 }
 
 export default async function handler(req, res) {
-  // Vercel Cron envia um header de autorização especial
   const authHeader = req.headers.authorization;
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -115,32 +118,38 @@ export default async function handler(req, res) {
   const startedAt = Date.now();
   const results = {};
   const log = [];
+  let overallStatus = 'ok';
+  const errorMessages = [];
 
   for (let i = 0; i < SUPPORTED_COUNTRIES.length; i++) {
     const code = SUPPORTED_COUNTRIES[i];
+    const frontendKey = code.toUpperCase();
     try {
       const data = await fetchCountry(code);
-      // Guardar com a key em UPPERCASE (o frontend usa códigos NUTS em maiúsculas: PT, DE, GB)
-      const frontendKey = code.toUpperCase();
-      results[frontendKey] = data;
-      log.push({
-        code: frontendKey,
-        capacity_gw: data.total_installed_mw ? (data.total_installed_mw / 1000).toFixed(1) : null,
-        has_live: !!data.live_production_mw
-      });
-      console.log(`[cron] ${frontendKey}: capacity=${log[log.length-1].capacity_gw}GW live=${log[log.length-1].has_live}`);
+      if (data.success) {
+        results[frontendKey] = { live_production_mw: data.live_production_mw, total_installed_mw: data.total_installed_mw, timestamp: data.timestamp };
+        log.push({
+            code: frontendKey,
+            capacity_gw: data.total_installed_mw ? (data.total_installed_mw / 1000).toFixed(1) : null,
+            has_live: !!data.live_production_mw
+        });
+      } else {
+          overallStatus = 'error';
+          const partialMessage = `Country ${frontendKey}: Incomplete data.`;
+          errorMessages.push(data.error ? `${partialMessage} Reason: ${data.error}`: partialMessage);
+          log.push({ code: frontendKey, error: data.error || 'Incomplete data' });
+      }
     } catch (err) {
-      console.error(`[cron] ${code} erro fatal: ${err.message}`);
-      log.push({ code: code.toUpperCase(), error: err.message });
+      overallStatus = 'error';
+      errorMessages.push(`Country ${frontendKey}: Fatal error. ${err.message}`);
+      log.push({ code: frontendKey, error: err.message });
     }
 
-    // Pausa entre países (excepto no último)
     if (i < SUPPORTED_COUNTRIES.length - 1) {
       await sleep(DELAY_BETWEEN_REQUESTS_MS);
     }
   }
 
-  // Aliases de códigos: o teu mapa usa "UK" (GB) e "EL" (GR) em alguns lugares
   if (results.GB) results.UK = results.GB;
   if (results.GR) results.EL = results.GR;
 
@@ -150,24 +159,49 @@ export default async function handler(req, res) {
     countries: results
   };
 
-  // Guardar no Vercel Blob (privado, conforme configuração do store)
+  let mainBlobError = null;
+  let mainBlobUrl = null;
   try {
     const blob = await put('energy-cache.json', JSON.stringify(payload), {
-      access: 'private',  // IMPORTANTE: o store foi criado como privado
+      access: 'private',
       contentType: 'application/json',
       addRandomSuffix: false,
       cacheControlMaxAge: 60 * 60 * 6
     });
-
-    return res.status(200).json({
-      success: true,
-      blob_url: blob.url,
-      total_countries: Object.keys(results).length,
-      duration_seconds: payload.duration_seconds,
-      log
-    });
+    mainBlobUrl = blob.url;
   } catch (err) {
     console.error('[cron] falha ao guardar no blob:', err);
-    return res.status(500).json({ error: 'Blob write failed', details: err.message });
+    mainBlobError = err;
+    overallStatus = 'error';
+    errorMessages.push(`Failed to write main data blob: ${err.message}`);
   }
+
+  const statusPayload = {
+    status: overallStatus,
+    lastRunAt: new Date().toISOString(),
+    message: errorMessages.length > 0 ? errorMessages.join('; ') : 'Job completed successfully.'
+  };
+
+  try {
+     await put('status.json', JSON.stringify(statusPayload), {
+      access: 'public',
+      contentType: 'application/json',
+      addRandomSuffix: false,
+      cacheControlMaxAge: 60 * 5
+    });
+  } catch(err) {
+      console.error('[cron] falha ao guardar status.json no blob:', err);
+  }
+
+  if (mainBlobError) {
+    return res.status(500).json({ error: 'Blob write failed', details: mainBlobError.message });
+  }
+
+  return res.status(200).json({
+    success: overallStatus === 'ok',
+    blob_url: mainBlobUrl,
+    total_countries: Object.keys(results).length,
+    duration_seconds: payload.duration_seconds,
+    log
+  });
 }

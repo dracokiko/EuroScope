@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "displayName": "Energy Dashboard",
+  "description": "Monitors energy data and news.",
+  "criticality": "high",
+  "stack": ["React", "Vite", "Vercel"],
+  "repo": "",
+  "owner": "Gemini",
+  "updatedAt": "2024-07-31",
+  "links": {}
+}
