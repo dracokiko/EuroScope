@@ -1,21 +1,14 @@
-import { Blob } from "@vercel/blob";
+import { list } from '@vercel/blob';
 
 export default async function handler(request, response) {
   try {
-    const { head } = await Blob.list({ prefix: "status.json" });
-    if (head.length === 0) {
-      return response.status(404).json({
-        status: "error",
-        lastRunAt: null,
-        message: "Status file not found.",
-      });
+    const { blobs } = await list({ prefix: 'status.json' });
+    if (blobs.length === 0) {
+      return response.status(404).json({ status: 'error', lastRunAt: null, message: 'Status file not found.' });
     }
-    const { url } = head[0];
-    const blob = await fetch(url).then((res) => res.json());
-    return response.status(200).json(blob);
+    const data = await fetch(blobs[0].url).then((res) => res.json());
+    return response.status(200).json(data);
   } catch (error) {
-    return response
-      .status(500)
-      .json({ status: "error", message: error.message });
+    return response.status(500).json({ status: 'error', lastRunAt: null, message: error.message });
   }
 }

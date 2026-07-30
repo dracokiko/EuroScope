@@ -110,98 +110,118 @@ async function fetchCountry(code) {
 }
 
 export default async function handler(req, res) {
-  const authHeader = req.headers.authorization;
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
-
-  const startedAt = Date.now();
-  const results = {};
-  const log = [];
-  let overallStatus = 'ok';
-  const errorMessages = [];
-
-  for (let i = 0; i < SUPPORTED_COUNTRIES.length; i++) {
-    const code = SUPPORTED_COUNTRIES[i];
-    const frontendKey = code.toUpperCase();
     try {
-      const data = await fetchCountry(code);
-      if (data.success) {
-        results[frontendKey] = { live_production_mw: data.live_production_mw, total_installed_mw: data.total_installed_mw, timestamp: data.timestamp };
-        log.push({
-            code: frontendKey,
-            capacity_gw: data.total_installed_mw ? (data.total_installed_mw / 1000).toFixed(1) : null,
-            has_live: !!data.live_production_mw
+        const authHeader = req.headers.authorization;
+        if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+
+        const startedAt = Date.now();
+        const results = {};
+        const log = [];
+        let overallStatus = 'ok';
+        const errorMessages = [];
+
+        for (let i = 0; i < SUPPORTED_COUNTRIES.length; i++) {
+            const code = SUPPORTED_COUNTRIES[i];
+            const frontendKey = code.toUpperCase();
+            try {
+            const data = await fetchCountry(code);
+            if (data.success) {
+                results[frontendKey] = { live_production_mw: data.live_production_mw, total_installed_mw: data.total_installed_mw, timestamp: data.timestamp };
+                log.push({
+                    code: frontendKey,
+                    capacity_gw: data.total_installed_mw ? (data.total_installed_mw / 1000).toFixed(1) : null,
+                    has_live: !!data.live_production_mw
+                });
+            } else {
+                overallStatus = 'error';
+                const partialMessage = `Country ${frontendKey}: Incomplete data.`;
+                errorMessages.push(data.error ? `${partialMessage} Reason: ${data.error}`: partialMessage);
+                log.push({ code: frontendKey, error: data.error || 'Incomplete data' });
+            }
+            } catch (err) {
+            overallStatus = 'error';
+            errorMessages.push(`Country ${frontendKey}: Fatal error. ${err.message}`);
+            log.push({ code: frontendKey, error: err.message });
+            }
+
+            if (i < SUPPORTED_COUNTRIES.length - 1) {
+            await sleep(DELAY_BETWEEN_REQUESTS_MS);
+            }
+        }
+
+        if (results.GB) results.UK = results.GB;
+        if (results.GR) results.EL = results.GR;
+
+        const payload = {
+            generated_at: new Date().toISOString(),
+            duration_seconds: ((Date.now() - startedAt) / 1000).toFixed(1),
+            countries: results
+        };
+
+        let mainBlobError = null;
+        let mainBlobUrl = null;
+        try {
+            const blob = await put('energy-cache.json', JSON.stringify(payload), {
+            access: 'private',
+            contentType: 'application/json',
+            addRandomSuffix: false,
+            cacheControlMaxAge: 60 * 60 * 6
+            });
+            mainBlobUrl = blob.url;
+        } catch (err) {
+            console.error('[cron] falha ao guardar no blob:', err);
+            mainBlobError = err;
+            overallStatus = 'error';
+            errorMessages.push(`Failed to write main data blob: ${err.message}`);
+        }
+
+        const statusPayload = {
+            status: overallStatus,
+            lastRunAt: new Date().toISOString(),
+            message: errorMessages.length > 0 ? errorMessages.join('; ') : 'Job completed successfully.'
+        };
+
+        try {
+            await put('status.json', JSON.stringify(statusPayload), {
+            access: 'public',
+            contentType: 'application/json',
+            addRandomSuffix: false,
+            cacheControlMaxAge: 60 * 5
+            });
+        } catch(err) {
+            console.error('[cron] falha ao guardar status.json no blob:', err);
+        }
+
+        if (mainBlobError) {
+            return res.status(500).json({ error: 'Blob write failed', details: mainBlobError.message });
+        }
+
+        return res.status(200).json({
+            success: overallStatus === 'ok',
+            blob_url: mainBlobUrl,
+            total_countries: Object.keys(results).length,
+            duration_seconds: payload.duration_seconds,
+            log
         });
-      } else {
-          overallStatus = 'error';
-          const partialMessage = `Country ${frontendKey}: Incomplete data.`;
-          errorMessages.push(data.error ? `${partialMessage} Reason: ${data.error}`: partialMessage);
-          log.push({ code: frontendKey, error: data.error || 'Incomplete data' });
-      }
     } catch (err) {
-      overallStatus = 'error';
-      errorMessages.push(`Country ${frontendKey}: Fatal error. ${err.message}`);
-      log.push({ code: frontendKey, error: err.message });
+        console.error('[cron] fatal error:', err);
+        const statusPayload = {
+            status: "error",
+            lastRunAt: new Date().toISOString(),
+            message: `Cron job failed with an unexpected error: ${err.message}`
+        };
+        try {
+             await put('status.json', JSON.stringify(statusPayload), {
+              access: 'public',
+              contentType: 'application/json',
+              addRandomSuffix: false,
+              cacheControlMaxAge: 60 * 5
+            });
+        } catch(putErr) {
+            console.error('[cron] falha ao guardar status.json de erro fatal no blob:', putErr);
+        }
+        return res.status(500).json({ error: 'Fatal error', details: err.message });
     }
-
-    if (i < SUPPORTED_COUNTRIES.length - 1) {
-      await sleep(DELAY_BETWEEN_REQUESTS_MS);
-    }
-  }
-
-  if (results.GB) results.UK = results.GB;
-  if (results.GR) results.EL = results.GR;
-
-  const payload = {
-    generated_at: new Date().toISOString(),
-    duration_seconds: ((Date.now() - startedAt) / 1000).toFixed(1),
-    countries: results
-  };
-
-  let mainBlobError = null;
-  let mainBlobUrl = null;
-  try {
-    const blob = await put('energy-cache.json', JSON.stringify(payload), {
-      access: 'private',
-      contentType: 'application/json',
-      addRandomSuffix: false,
-      cacheControlMaxAge: 60 * 60 * 6
-    });
-    mainBlobUrl = blob.url;
-  } catch (err) {
-    console.error('[cron] falha ao guardar no blob:', err);
-    mainBlobError = err;
-    overallStatus = 'error';
-    errorMessages.push(`Failed to write main data blob: ${err.message}`);
-  }
-
-  const statusPayload = {
-    status: overallStatus,
-    lastRunAt: new Date().toISOString(),
-    message: errorMessages.length > 0 ? errorMessages.join('; ') : 'Job completed successfully.'
-  };
-
-  try {
-     await put('status.json', JSON.stringify(statusPayload), {
-      access: 'public',
-      contentType: 'application/json',
-      addRandomSuffix: false,
-      cacheControlMaxAge: 60 * 5
-    });
-  } catch(err) {
-      console.error('[cron] falha ao guardar status.json no blob:', err);
-  }
-
-  if (mainBlobError) {
-    return res.status(500).json({ error: 'Blob write failed', details: mainBlobError.message });
-  }
-
-  return res.status(200).json({
-    success: overallStatus === 'ok',
-    blob_url: mainBlobUrl,
-    total_countries: Object.keys(results).length,
-    duration_seconds: payload.duration_seconds,
-    log
-  });
 }

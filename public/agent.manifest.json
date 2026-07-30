@@ -4,8 +4,8 @@
   "description": "Monitors energy data and news.",
   "criticality": "high",
   "stack": ["React", "Vite", "Vercel"],
-  "repo": "",
-  "owner": "Gemini",
-  "updatedAt": "2024-07-31",
+  "repo": "https://github.com/jmarrucho/energy-dashboard",
+  "owner": "José Marrucho",
+  "updatedAt": "2024-08-01",
   "links": {}
 }
